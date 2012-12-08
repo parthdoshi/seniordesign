@@ -1,0 +1,37 @@
+1. Markdown Heading 1
+======================
+
+I left a blank line, and am now writing text.
+
+Paragraphs are separated by blank lines, with no indentation.
+
+
+2. Heading Twos are "underlined" with dashes
+---------------------------------------------
+
+I left two blank lines above the heading. Block quotes follow:
+
+> Never have so many owed so much to so few blah 
+> more text, etc.
+
+Bulleted lists use bullets, then dashes, then pluses:
+
+* First level of list
+* Another item
+  
+  To make a multi-paragraph bullet, (why??) indent the first
+line by 3 spaces.
+* A third item
+  - This item has subitems
+  - Subitems are indented by two spaces
+    + A third level of listing
+    + I added an additional two spaces
+
+You can of course also write ordered lists with any kind of number
+
+1. First item
+2. Second item
+  i. first sub-item
+  ii. second sub-item
+    (a) The punctuation choice is up to you
+    (b) But the additional two spaces of indentation continues

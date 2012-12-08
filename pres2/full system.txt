@@ -1,0 +1,21 @@
+Full System
+============
+
+Designed in two phases
+
+1. Current GHG calculation
+   * Based on standard 4 stage traffic model + 5th stage
+     1. Generation: From where?
+     2. Distribution: At what time?
+     3. Modal choice: Using what method?
+     4. Assignment: What are the specific routes used?
+     5. GHG: What are the emissions from each route?
+   * Significant data gathering
+     + Parking lot data
+     + SEPTA usage data
+     + Average fleet profile
+2. Scenario simulation of GHG emissions
+   * Incorporate "macro" feedback
+     + Congestion: "too crowded"
+     + Scheduling SEPTA changes schedules on game-day
+     + Fleet changes: tailgaters need trucks

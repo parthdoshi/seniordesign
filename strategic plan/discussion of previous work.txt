@@ -1,0 +1,13 @@
+Discussion of Previous Work (Guideline-One to Three Pages)
+
+> * Past Tense, as appropriate *
+> 1 to 3 text pages
+> Describe and interpret previous work related to project
+> How project extends, enhances previous work
+> All sources properly referenced
+
+This section of the report should contain specific information on the background of the project. Present recent related research.
+
+It is a summary and discussion of previous work related to the project. The discussion should summarize the results of each approach and their pros and cons. There must be literature references that are properly cited. Use a number enclosed in square brackets to identify the source e.g. [1]. Any source cited in the text of your paper must also be listed in Section 10, “References”. See the “Electrical Engineering Style Guide” on the ESE-441/490 Senior Design web site for details on how to cite references.
+
+[PLAGIARISM WARNING SNIPPED]

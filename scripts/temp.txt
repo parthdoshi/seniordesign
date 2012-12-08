@@ -1,0 +1,31 @@
+<table width="425">
+  <tr>
+    <td colspan="4">
+      <h2 class="normal">Parking</h2>
+    </td>
+  <tr>
+  <tr>
+    <td width="30%">
+      <strong>&nbsp;</strong>
+    </td>
+    <td width="23%">
+      <strong>Spaces</strong>
+    </td>
+    <td width="23%">
+      <strong>Availability</strong>
+    </td>
+    <td width="15%">
+      <strong>Price</strong>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <strong>Non-SEPTA</STRONG>
+    </td>
+    <td></td>
+    <td></td>
+    <td align="center">
+      <a href="alternate-parking/market.html">learn more</a>
+    </td>
+  </tr>
+</table>

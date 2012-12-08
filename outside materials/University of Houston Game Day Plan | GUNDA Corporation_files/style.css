@@ -1,0 +1,175 @@
+@import url(wp-default.css);
+*{margin:0;outline:0;padding:0}
+body{background:#006599 url(images/bg.png) repeat-x 0 0;font-family:'Trebuchet MS', Arial, Helvetica, Sans-Serif;font-size:12px;line-height:16px}
+a{color:#0252aa;cursor:pointer;text-decoration:none}
+a:hover{text-decoration:underline}
+a img{border:0}
+h1{color:#006599;font-size:24px;line-height:26px}
+h2{font-size:24px;line-height:26px}
+h3{color:#2b3082;font-size:20px;line-height:22px}
+h4{color:#000;font-size:14px;line-height:16px}
+h5{color:#000;font-size:12px;line-height:14px}
+input,textarea,select{font-family:Arial, Helvetica, sans-serif;font-size:12px}
+textarea{overflow:hidden}
+
+.cl{clear:both;display:block;font-size:0;height:0;line-height:0;text-indent:-4000px}
+.notext{font-size:0;line-height:0;text-indent:-4000px}
+.right,.alignright{display:inline;float:right}
+.shell{margin:0 auto;width:960px}
+
+#header{background:url(images/header-bg.png) repeat-x 0 0;height:100%;min-height:112px;padding:7px 30px 11px 22px}
+#logo{display:inline;float:left;width:368px}
+#logo a{background:url(images/logo.png) no-repeat 0 0;display:block;height:112px}
+.phone{color:#333;display:inline;float:right;font-size:24px;font-weight:700;line-height:26px;padding:21px 0 0;text-align:right;width:165px}
+.phone span{color:#2b3084;display:block}
+#navigation{background:url(images/nav-bg.png) repeat-x 0 0;height:40px;position:relative;text-align:center;width:960px;z-index:5}
+#navigation ul li{display:inline;float:left;font-family:Arial, sans-serif;font-size:14px;height:40px;line-height:40px;padding:0 28px;position:relative}
+#navigation ul li a{color:#fff;display:inline-block;font-weight:700;height:40px;text-transform:uppercase}
+#navigation ul li a:hover,#navigation ul li.current-menu-item > a,#navigation ul li.current-menu-ancestor > a,#navigation ul li a.hover{color:#3ebbe9;text-decoration:none}
+#navigation ul li .dd{background:#070707;border-top:solid 1px #525252;display:none;left:12px;padding:0 0 10px;position:absolute;text-align:left;top:40px;width:293px;z-index:5}
+#navigation ul li .dd ul{display:block;float:none}
+#navigation ul li .dd li{border-bottom:solid 1px #525252;display:block;float:none;height:32px;line-height:32px;padding:0}
+#navigation ul li .dd li a{display:block;height:32px;padding:0 0 0 20px;text-transform:none}
+#navigation ul li .dd li a:hover{background:#13202c}
+
+#slider,#slider .jcarousel-clip,#slider ul,#slider ul li{height:400px;overflow:hidden;position:relative;width:960px;z-index:3}
+#slider ul li .cnt{background:url(images/slider-cnt-bg.png) repeat 0 0;bottom:0;color:#FFF;font-size:12px;height:93px;left:0;line-height:26px;padding:17px 0 0 53px;position:absolute;width:907px}
+#slider ul li .cnt h2{color:#FFF;padding:0 0 4px}
+#slider .nav a{bottom:47px;font-size:0;height:15px;line-height:0;position:absolute;text-indent:-4000px;width:8px;z-index:10}
+#slider .nav a.prev{background:url(images/slider-nav-prev.png) no-repeat 0 0;left:11px}
+#slider .nav a.next{background:url(images/slider-nav-next.png) no-repeat 0 0;right:11px}
+
+#main{background:url(images/main-bg.png) repeat-y 0 0;display:block;height:auto!important;min-height:800px;padding:10px 0 0}
+#main a.more-link{color:#fff;display:inline;float:right;font-size:14px;font-weight:700;line-height:40px;text-transform:uppercase}
+
+#content{display:inline;float:left;padding:15px 0 0;width:720px}
+#content td{vertical-align:top}
+#content table.contact{width:500px}
+
+/*Formidable Contact Form Styles*/
+.frm-show-form input, .frm-show-form select{ border:1px solid #333; font-family:Arial, Helvetica, sans-serif; font-size:12px; height:30px; width:250px; }
+.frm-show-form textarea { border:1px solid #333; font-family:Arial, Helvetica, sans-serif; font-size:12px; height:200px; width:250px; }
+.with_frm_style label { font-size:14px !important; text-align: right; }
+
+/*Contact Form 7 Styles 
+.wpcf7-form input,.wpcf7-form textarea,.wpcf7-form select{border:#666 1px solid;font-family:Arial, Helvetica, sans-serif;font-size:12px;height:30px;width:250px}
+.wpcf7-form input.wpcf7-submit{background-color:#06F;border:#666 1px solid;color:#CCC;font-family:Arial, Helvetica, sans-serif;font-size:12px;height:30px;width:250px}*/
+
+.featured-boxes{overflow:hidden;padding:10px 0 21px;width:710px}
+.featured-boxes ul{position:relative;width:720px}
+.featured-boxes .box{display:inline;float:left;height:90px;padding:0 20px 0 0;position:relative;width:220px}
+.featured-boxes .box a.cnt{background:#1962af;color:#fefeff;font-size:14px;font-weight:700;height:34px;left:0;line-height:16px;padding:8px 10px 8px 8px;position:absolute;top:22px}
+.featured-boxes .box a.cnt span.strike-bg{background:url(images/box-cnt-strike.png) no-repeat 0 0;height:50px;position:absolute;right:-30px;top:0;width:30px}
+
+.welcome{padding:0 0 10px 15px}
+.welcome .image{display:inline;float:left;padding:0 21px 0 0;width:205px}
+.welcome .cnt{color:#31332b;display:inline;float:right;font-size:12px;line-height:18px;padding:8px 0 0;width:469px}
+.welcome .cnt h3{padding:0 0 17px;text-transform:uppercase}
+.welcome .cnt p{padding:0 0 38px;width:445px}
+.welcome .cnt a.more-link{background:url(images/more-link-content.png) no-repeat right 0;color:#333!important;height:40px;padding:0 50px 0 0}
+
+#sidebar{display:inline;float:right;padding:8px 0 0;width:240px}
+
+.contact-box{background:#525252 url(images/contact-box-bg.jpg) no-repeat 0 0;padding:17px 0 10px 18px}
+.contact-box h2{color:#FFF;font-size:25px;line-height:27px;padding:0 0 24px}
+.contact-box p{color:#FFF;font-size:13px;line-height:18px;padding:0 35px 16px 0}
+.contact-box p .number{font-size:18px}
+.contact-box a{color:#FFF}
+.contact-box a.more-link{background:url(images/more-link-contact.png) no-repeat right 0;display:block;margin:2px 0 0;padding:0 96px 0 0;text-align:left}
+.featured-projects{background:#2b3033;min-height:282px;padding:15px 0 10px;width:960px}
+.featured-projects h2{ font-weight:400; padding:0 0 15px 15px; text-transform:uppercase; color: #FFF; }
+.featured-projects .col{display:inline;float:left;padding:0 10px;width:300px}
+.featured-projects .col p{line-height:15px;padding:11px 0 13px}
+.featured-projects .col p a{color:#fff;display:block;font-weight:700;text-transform:uppercase}
+.featured-projects a.more-link{background:url(images/more-bg-featured.png) no-repeat right 0;padding:0 49px 0 0}
+
+#footer{line-height:18px;padding:6px 35px 33px 19px}
+#footer .nav{display:inline;float:right;text-align:right;width:200px}
+#footer .nav li{display:inline}
+#footer .nav li span{padding:0 0 0 3px}
+#footer .nav li a{color:#fff}
+
+.case h3{color:#ccc;padding:0 20px 8px 18px;text-transform:uppercase}
+.case ul{border-top:solid 1px #525252;padding:0 0 18px}
+.case ul li{border-bottom:solid 1px #525252;display:block;line-height:14px}
+.case ul li a{color:#fff;display:block;padding:8px 10px 9px 18px}
+.case ul li a:hover{background:#35424f;text-decoration:none}
+
+.widget_nav_menu h3{color:#ccc;padding:0 20px 8px 18px;text-transform:uppercase}
+.widget_nav_menu h2{color:#ccc;padding:0 20px 8px 18px;text-transform:uppercase}
+.widget_nav_menu ul{border-top:solid 1px #525252;padding:0 0 18px}
+.widget_nav_menu ul li{border-bottom:solid 1px #525252;display:block;line-height:14px}
+.widget_nav_menu ul li a{color:#fff;display:block;padding:8px 10px 9px 18px}
+.widget_nav_menu ul li a:hover{background:#35424f;text-decoration:none}
+.widget_nav_menu ul li a:hover,.widget_nav_menu ul li.current-menu-item > a,.widget_nav_menu ul li.current-menu-ancestor > a,.widget_nav_menu ul li a.hover{color:#3ebbe9;text-decoration:none}
+.blog h1{color:#006599;font-weight:400;padding:0 0 10px 48px;text-transform:uppercase}
+.blog .row{border-bottom:solid 1px #9d9d9d;padding:12px 0 23px 45px}
+.blog .row p.date{color:#000;font-size:14px;line-height:16px;padding:0 0 8px;text-transform:uppercase}
+.blog .row h3{font-size:18px;font-weight:400;line-height:20px;text-transform:uppercase}
+.projects{padding:0 0 8px}
+.projects h1{font-size:20px;font-weight:400;line-height:22px;padding:0 0 0 16px;text-transform:uppercase}
+.projects .project{display:inline;float:left;padding:25px 10px 5px;width:220px}
+.projects .project .cnt{background:#e2e2e2;height:60px;width:220px}
+.projects .project .cnt a{background:url(images/more-link-project.png) no-repeat right 0;color:#333;display:block;font-weight:700;height:53px;line-height:15px;padding:7px 45px 0 9px;text-transform:uppercase}
+.post{padding:0 0 0 47px}
+.post h1,h3{font-weight:400;text-transform:uppercase}
+.post .breadcrumb{color:#006599;font-size:11px;line-height:16px;padding:0 0 10px}
+.post .breadcrumb h4{display:inline;float:left;font-size:12px;line-height:18px; !important}
+.post .breadcrumb h4 a{color:#006599;text-decoration:underline; !important}
+.post .breadcrumb span{display:inline;float:left;padding:0 10px}
+.post h2 {padding-top: 30px;}
+.post h3{color:#006599;padding:25px 0 13px}
+.post h3.project-title{padrding-bottom:5px}
+.post h4{padding:0 0 13px}
+.post h5{padding:0 0 12px}
+.post p{ color:#000; line-height:20px; padding:15px 25px 5px 0; font-size: 14px; }
+.post ul{margin-left:1.5em; font-size:110%;}
+.post ul li {padding: 10px 0 0 0; font-size:100%;}
+.post a { text-decoration: underline; }
+
+img.alignleft  { /*background:#E8E8E8; border:1px solid #999;*/ padding:6px; margin:0 15px 15px 0;}
+
+.post .gallery-slider li {padding-top:0px}
+.gallery{padding:8px 0 0}
+.gallery .image{display:block;padding:0 0 13px;width:637px}
+.gallery-slider{background:#e2e2e2;height:60px;padding:0 27px;position:relative;width:583px}
+.gallery-slider .slider-holder,.gallery-slider .slider-holder .jcarousel-clip,.gallery-slider .slider-holder ul,.gallery-slider .slider-holder ul li{height:60px;overflow:hidden;position:relative;width:583px}
+.gallery-slider li{display:inline;float:left;width:83px;}
+.gallery-slider li a{display:inline;float:left;height:60px;margin:0 3px;width:77px}
+.gallery-slider li img{border:solid 1px #000;width:75px}
+.gallery-slider .nav a{font-size:0;height:60px;line-height:0;position:absolute;text-indent:-4000px;top:0;width:27px}
+.gallery-slider .nav a.prev{background:url(images/prev-slide.png) no-repeat 0 0;left:0}
+.gallery-slider .nav a.next{background:url(images/next-slide.png) no-repeat 0 0;right:0}
+
+body.home #main{background:url(images/home-main-bg.png) repeat-y 0 0;min-height:630px;padding-top:0}
+body.home #content{padding:0 0 0 10px;width:710px}
+body.home #sidebar{padding:0}
+body.home .contact-box{min-height:300px;padding-bottom:0}
+body.home .contact-box a.more-link{margin-top:103px}
+
+.navigation{padding:30px}
+
+h3#reply-title{margin-bottom:10px}
+
+form#commentform label{display:block;width:100px}
+form#commentform input[type=text],form#commentform textarea{border:1px solid #A5ACB2;display:block;width:200px}
+.comment-form-author label,.comment-form-author input,.comment-form-email label,.comment-form-email input,.comment-form-url label,.comment-form-url input,.comment-form-comment label,.comment-form-comment textarea{float:left}
+.comment-form-comment textarea{margin-bottom:20px}
+form#commentform input[type=text]{margin-bottom:15px}
+div.comment-author img.avatar{margin:10px 10px 10px 0;vertical-align:middle}
+div.comment-author{font-weight:700}
+div.comment-reply{font-style:italic}
+p.comment-notes,p.form-submit,p.logged-in-as{margin:15px 0}
+ol.commentlist,ul.children{list-style-type:none}
+ul.children{margin-left:30px}
+ol.commentlist li > div{padding-bottom:20px}
+.logged-in-as{padding-bottom:0!important}
+.comment-text p{padding-bottom:0}
+.comments input[type=submit]{margin-left:100px}
+.left,.alignleft,#navigation ul,#slider ul li{display:inline;float:left}
+.featured-boxes .box a.cnt:hover,.post .breadcrumb h1 a:hover,.post .breadcrumb h1 a.active{text-decoration:none}
+.featured-boxes .box a.cnt span,.projects .project img{display:block}
+.blog h1 a,.blog .row h3 a{color:#006599}
+.comments,ol.commentlist{margin-top:30px}
+
+.gx a{ color:#CFCFCF; font-size:10px; padding-left: 1.5em; }

@@ -1,0 +1,45 @@
+3 Strategic Plan / Structure (Guideline-Three Pages to Five Pages)
+This section is the area where most of your effort should be focused for the 1st Project Report and the Phase 1 Report.
+
+When writing your strategic plan please include systems methodology features that are relevant
+to your project.
+
+Some of these features are:
+
+- Involve complex subsystems that have multiple and often sophisticated interactions with each other;
+- Involve several "interested parties" or "stakeholders" with different value sets;
+- Include externalities such as social aspects as well as the economic considerations (efficiency, productivity, and consumption) that are components of most engineering products or operating processes;
+- Consider both initial effort (investment) and continuous results (operating benefits and costs) when calculating the total cost of a project;
+- Use modeling, simulation, trade-off and sensitivity analyses in the design process;
+- Develop alternate solutions for evaluation.
+
+
+Technical reports, involving different complex concepts, methods of analysis, theoretical and applied models, experiments and analyses, typically have many diagrams, tables and other exhibits. These exhibits should be an integral part of the text. Thus, each exhibit must be mentioned, discussed or interpreted in the text, and it should be placed on the page where it is mentioned or on the one following its mention in the text. All exhibits are to be labeled with a caption and identifying number as shown above.
+
+It looks professional and it reads easier if you embed your exhibits into the Word document. This is readily accomplished with modern report writing software, e.g. MS Word. Large and/or repetitious tables, diagrams, computer code, etc. are best placed in an Appendix.
+The following sections discuss some of the items that belong in the Strategic Plan. Note: There should always be a few lines of introductory text in Section 3 that introduce and summarize the information that appears in sub-sections 3.1, 3.2.... 
+
+
+3.1 System Proposed Approach / Theory of Operation
+This part of the write - up should include a high level description of the proposed technical approach to designing your product prototype.
+
+The approach should include:
+
+• A proposed description of the methodology to be used
+• The information and data to be collected to initiate the project
+• The analysis to be performed and the model to be used
+• Theoretical, mathematical, or logical analysis of the operation
+• The alternative solutions to be developed
+• The methods to be used for their comparative evaluation
+• Expected performance (which ties into the previously stated project goals)
+
+The selection of the final design will be discussed in the "Results" section (Section 4). If the product
+prototype involves developing a conceptual or mathematical model, there is always a trade-off between the assumptions made and the complexity of the model. That should be explained in describing the modeling work to be performed.
+
+A system block diagram or a system flow chart should be included to help the reader understand the approach that the team is taking to achieve the desired product prototype. The diagrams should be referenced in the text and appropriately explained. Assume that your reader is a reasonably intelligent person with a technical background, but who is not a subject matter expert.
+
+
+3.2 System Specification
+It is O.K. to state in the project submission form that (for example) you "want to design an update for the Penn Solar car." By the time you write the 1st Project Report, however, you should be more specific and have a table that lists the quantitative characteristics of the product prototype you are designing and that you will test against in April. 
+
+The specifications in Table 3.2-1 may change and many more can be added as the design matures. That’s OK. However, in most cases, unless you have system specifications, you can’t go on to the next step of listing sub-system, hardware, or software requirements. The designers should have a near complete specification for Phase 1 Report.
