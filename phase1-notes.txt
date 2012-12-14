@@ -1,14 +1,56 @@
-1. References
-2. Exhibits
-3. Specify system more clearly
+PHASE 1 FEEDBACK
+==================
 
+FOR DICUSSION
+----------------
+[X] What exactly is wrong with formatting? (SCOTT)
+[X] Section 9 references: How to do numerical listing
 
 NEED TO ADD
-------------
-- Abstract
-  + Half page long
-  + 250 words or fewer
-- 6 or more exhibits
-- Update schedule
-- Preliminary Results
-- Financial Info
+-------------
+[ ] - Abstract
+      + Half page long
+      + 250 words or fewer
+[ ] - 6 or more exhibits
+[ ] - Update schedule
+[ ] - Preliminary Results
+[X] - Financial Info
+[X] - Bibliography (section 10) literature not cited (alphabetical)
+[ ] - More references
+[X] - Project Budget
+[ ] - Schedule Discussion
+
+
+SECTION SPECIFIC
+------------------
+[X] 0/ TITLE PAGE
+       [X] Follow the outline
+
+[ ] 1/
+    [ ] Need range of measurement for goals
+    [ ] Describe approach to the problems (appropriate for stakeholders)
+
+[ ] 2.2/
+    [ ] Previous work discussion
+    [ ] *THICKLY* add references
+    [X] Add square bracket citations
+    [ ] Pros/Cons of each approach
+    [ ] Need to add somethign "more closely related" to our system
+
+[ ] 3.1/
+    [ ] Discuss alternative solutions/other approaches
+    [ ] "How does incentive structure work?"
+
+[X] 3.2/
+    [X Put specs into table form
+        (quantitative and qualitative characterstics of subsystems)
+    [X] Define inputs/outputs for each subsystem
+    [X] 3.2.2/ Declare that all software is available at Penn
+
+[X] 4/
+    [X] Should be section 8
+    [X] Add more terms:
+        [X] - API
+        [X] - SQL
+        [X] - XML
+        [X] - MAG
