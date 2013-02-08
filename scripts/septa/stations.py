@@ -8,7 +8,7 @@ serving those stations from the websites. It updates
 the xml and saves the updated list into a (potentially)
 new file.
 
-usage: $ python stations.py xml-file-name [output-name]
+usage: $ python3 stations.py xml-file-name [output-name]
 
 """
 
@@ -19,7 +19,7 @@ import re
 LINES_RE = re.compile("<p>This station is served by:<br />"
                       "([^<]+)</p>")
 class Station:
-    
+
     def __init__(self, element):
         self.element = element
         assert (self.element.find('url') is not None)
@@ -63,7 +63,7 @@ if __name__ == "__main__":
         outname = sys.argv[2]
     except IndexError:
         outname = xmlfilename
-        
+
     tree = ET.parse(xmlfilename)
     stations = [Station(e) for e in tree.iter(tag='station')]
     for station in stations:

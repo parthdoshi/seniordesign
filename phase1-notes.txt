@@ -8,17 +8,17 @@ FOR DICUSSION
 
 NEED TO ADD
 -------------
-[ ] - Abstract
+[X] - Abstract
       + Half page long
       + 250 words or fewer
 [ ] - 6 or more exhibits
 [ ] - Update schedule
-[ ] - Preliminary Results
+[X] - Preliminary Results
 [X] - Financial Info
 [X] - Bibliography (section 10) literature not cited (alphabetical)
-[ ] - More references
+[X] - More references
 [X] - Project Budget
-[ ] - Schedule Discussion
+[X] - Schedule Discussion
 
 
 SECTION SPECIFIC
@@ -28,18 +28,18 @@ SECTION SPECIFIC
 
 [ ] 1/
     [ ] Need range of measurement for goals
-    [ ] Describe approach to the problems (appropriate for stakeholders)
+    [X] Describe approach to the problems (appropriate for stakeholders)
 
-[ ] 2.2/
-    [ ] Previous work discussion
-    [ ] *THICKLY* add references
+[X] 2.2/
+    [X] Previous work discussion
+    [X] *THICKLY* add references
     [X] Add square bracket citations
-    [ ] Pros/Cons of each approach
-    [ ] Need to add somethign "more closely related" to our system
+    [X] Pros/Cons of each approach
+    [X] Need to add somethign "more closely related" to our system
 
-[ ] 3.1/
-    [ ] Discuss alternative solutions/other approaches
-    [ ] "How does incentive structure work?"
+[X] 3.1/
+    [X] Discuss alternative solutions/other approaches
+    [X] "How does incentive structure work?"
 
 [X] 3.2/
     [X Put specs into table form

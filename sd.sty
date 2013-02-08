@@ -1,45 +1,63 @@
+\NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{sd}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%% FONT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \usepackage{mathptmx}
+% Set font to Adobe Times Roman (or equivalent)
+% http://www.ctan.org/pkg/mathptmx
+% Remember to use \documentclass[12pt] to set the 12pt size
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%% MARGINS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\usepackage[letterpaper,margin=1in]{geometry}
-\usepackage[parfill]{parskip}
+%%%%%%%%%%%%%%%%%%%%%% MARGINS/SPACING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage[letterpaper,margin=1in,headheight=15pt]{geometry}
+% headheight set to appease fancyhdr
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%% HEADERS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Following based on (or taken from) parskip package:
+% ( by H.Partl, TU Wien, 19 Jan 1989 )
+\parskip=0.5\baselineskip \advance\parskip by 0pt plus 2pt
+\parindent=\z@
+\setlength{\parfillskip}{30\p@ \@plus 1fil}
+\def\@listi{%
+  \leftmargin\leftmargini%
+  \topsep\parskip\parsep\parskip\itemsep\z@}
+\def\@listii{%
+  \leftmargin\leftmarginii%
+  \labelwidth\leftmarginii\advance\labelwidth-\labelsep%
+  \topsep\parskip\parsep\parskip\itemsep\z@}
+\def\@listiii{%
+  \leftmargin\leftmarginiii%
+  \labelwidth\leftmarginiii\advance\labelwidth-\labelsep%
+  \topsep\parskip\parsep\parskip\itemsep\z@}
+\partopsep=\z@
+\parsep\parskip
+\itemsep\z@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% HEADINGS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \usepackage{fancyhdr}
 \pagestyle{fancy}
-\fancyhead{}
-\fancyhead[R]{Team \#13}
+\fancyhf{}
+\fancyhead[R]{Team \@teamno}
 \renewcommand{\headrulewidth}{0pt}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%% TITLE PAGE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \renewcommand{\maketitle}{
-  \begin{titlepage}
-    \hfill Team 13 \\[2em]
-    {
-      \centering
-      \fontsize{12}{20}\selectfont
-      University of Pennsylvania \\
-      School of Engineering and Applied Science \\
-      Department of Systems and Electrical Engineering \\[4ex]
-      ESE Senior Design\\
-      \vfill
-      {\huge \bfseries \@title}\\[12pt]
-      Parth Doshi (\emph{parthd@seas.upenn.edu}) \\[-8pt]
-      Zain Mukaty (\emph{zmukaty@seas.upenn.edu}) \\[-8pt]
-      Felipe Ochoa (\emph{felipeo@seas.upenn.edu}) \\[12pt]
-      \@date \\
-    }
-    \vspace{2em}
-    \noindent Advisor: \\
-    Dr. Andrew E. Huemmler \\
-    huemmler@seas.upenn.edu
+  {
+    \centering
+    University of Pennsylvania \\[1ex]
+    School of Engineering and Applied Science \\[1ex]
+    Department of Systems and Electrical Engineering \\[2ex]
+    ESE Senior Design\\
     \vfill
-    \vfill
-    \hfill Phase 1 Project Report
-  \end{titlepage}}
+    {\huge \bfseries \@title}\\[12pt]
+    \@authors \\[12pt]
+    \@date \\
+  }
+  \vspace{2em}
+  \noindent Advisor: \\[.5ex]
+  \@advisor
+  \vfill
+  \vfill
+  \hfill \@reportname
+  \newpage}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TOC %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \usepackage{tocloft}
@@ -50,18 +68,33 @@
 \setcounter{tocdepth}{2}
 
 \tocloftpagestyle{empty}
-\newcommand{\frontmatter}{\cfoot{}}
-\newcommand{\mainmatter}{\setcounter{page}{1}\cfoot{\thepage}}
+\renewcommand\cftdot{}
+\let\@toc\tableofcontents
+\def\toc{
+  \@toc}
+\def\mainmatter{
+  \setcounter{page}{1}
+  \fancyfoot[C]{\textrm{\thepage}}}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%% ABSTRACT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \renewcommand{\abstract}{
   \section*{Abstract}
-  University of Pennsylvania \\
-  School of Engineering and Applied Science \\
-  Department of Electrical and Systems Engineering \\[2ex]
-  \textsc{Authors:}
-  Parth Doshi, Zain Mukaty and Felipe Ochoa \\
-  \begin{center}\large \@title\end{center}}
+  University of Pennsylvania \hspace*{\fill} \vspace{-.5\baselineskip}
+
+  School of Engineering and Applied Science \hspace*{\fill}
+  \vspace{-.5\baselineskip}
+
+  Department of Electrical and Systems Engineering \hspace*{\fill}
+
+  \textsc{Authors:} \@authorsnoemail \hspace*{\fill}
+  \vspace{\baselineskip}
+
+  \hspace*{\fill} {\large\@title} \hspace*{\fill}
+  \vspace{.5\baselineskip}
+
+}
+
 
 %%%%%%%%%%%%%%%%%%%%%% REFERENCES / BIBLIOGRAPHY %%%%%%%%%%%%%%%%%%%%%
 \usepackage[style=numeric,backend=biber,defernumbers]{biblatex}
@@ -69,6 +102,9 @@
 \defbibheading{refs}[\bibname]{%
   \newpage%
   \section{#1}}
+\setcounter{biburlnumpenalty}{5000}
+\setcounter{biburlucpenalty}{5000}
+\setcounter{biburllcpenalty}{5000}
 \newcommand{\makereferences}{%
   \printbibliography[title={References},category=cited,heading=refs]}
 \newcommand{\makebibliography}{%
@@ -79,26 +115,82 @@
 \AtEveryCitekey{\addtocategory{cited}{\thefield{entrykey}}}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% APPENDICES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\let\oldapps\appendix
+\let\oldappendix\appendix
+\let\oldsection\section
 \renewcommand{\appendix}{%
   \newpage%
   \vspace*{\fill}%
   \begin{center}\huge \bfseries Appendices\end{center}
   \vspace*{\fill}%
-  \oldapps%
-  \renewcommand{\thesection}{A-\arabic{section}} }
+  \oldappendix%
+  \fancyfoot[C]{}
+  \renewcommand{\thesection}{A-\arabic{section}}
+  \renewcommand{\section}[1]{%
+    \renewcommand{\thepage}{}% To suppress TOC entry
+    \newpage%
+    \setcounter{page}{1}%
+    \fancyfoot[C]{\thesection  \roman{page}}%
+    \oldsection{##1}}}
 
-\let\oldsection\section
-\newcommand{\ssection}[1]{%
-  \renewcommand{\thepage}{}
-  \newpage%
-  \setcounter{page}{1}%
-  \cfoot{A-\arabic{section} \roman{page}}
-  \oldsection{#1}}
+%%%%%%%%%%%%%%%%%%%%%%%% CUSTOMIZATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TEAM NUMBER
+\def\team#1{\gdef\@teamno{#1}}
+
+% AUTHORS
+\newcommand{\authorpre}{}
+\newcommand{\authorstyle}[1]{#1}
+\newcommand{\authorpost}{}
+\newcommand{\emailpre}{ (}
+\newcommand{\emailstyle}[1]{\emph{#1}}
+\newcommand{\emailpost}{)}
+\newcommand{\entrysep}{\\}
+\newcommand{\entrypost}{}
+
+\let\@authors\@empty
+\let\@authorsnoemail\@empty
+
+\def\addauthor#1{\@addauthor#1;;\@nil}
+\def\@addauthor#1;#2;#3\@nil{
+  \protected@edef\@thisauth{%
+    \authorpre\protect\authorstyle{#1}\authorpost}%
+  \if \relax#2\relax \def\@thisemail{}%
+  \else%
+    \protected@edef\@thisemail{%
+      \emailpre%
+      \protect\emailstyle{#2}%
+      \emailpost}%
+  \fi%
+  \ifx \@authors\@empty%
+    \protected@edef\@authorsnoemail{\@thisauth}%
+    \protected@edef\@authors{\@thisauth\@thisemail\entrypost}%
+  \else%
+    \protected@edef\@authorsnoemail{\@authorsnoemail, \@thisauth}%
+    \protected@edef\@authors{%
+      \@authors\entrysep\@thisauth\@thisemail\entrypost}%
+  \fi}
+
+% ADVISOR
+\def\advisor#1{\@setadvisor#1;;\@nil}
+\def\@setadvisor#1;#2;#3\@nil{%
+  \gdef\@advisor{#1 \\ #2}}
+
+% REPORT NAME
+\newcommand{\reportname}[1]{%
+  \protected@edef\@reportname{\protect#1}}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\usepackage{enumerate}
+\usepackage{enumitem}
+\newcommand{\changeitem}{%
+  \let\latexitem\item
+  \renewcommand\item[1][]{\latexitem\relax{\bfseries##1} }%
+}
+\newenvironment{descenum}[1][]%
+{\begin{enumerate}[before=\changeitem,#1]}%
+  {\end{enumerate}}
+
 \usepackage{array}
-\usepackage{calc}
 \usepackage{graphicx}
+\usepackage{subcaption}
+\endinput
