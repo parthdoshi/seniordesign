@@ -8,7 +8,7 @@ serving those stations from the websites. It updates
 the xml and saves the updated list into a (potentially)
 new file.
 
-usage: $ python stations.py xml-file-name [output-name]
+usage: $ python stations.py xml-file-name output-name
 
 """
 
@@ -26,7 +26,7 @@ class Station:
     PARKING_RE = re.compile('<table[^>]*>\s*<tr>\s*<td[^>]*>'
                             '<h2 class="normal">Parking</h2>'
                             '.*</table>', re.DOTALL)
-    
+
     def __init__(self, element):
         self.element = element
         assert (self.element.find('url') is not None)
@@ -69,7 +69,7 @@ class Station:
         # subbing <br>s may result in double newlines, and hence blank "entries"
         # That's why composition below is filtered
         self._lines = [s.strip() for s in section.splitlines() if s.strip()]
-            
+
     def set_lines(self):
         lines = self.element.find('lines')
         if lines is None:
@@ -98,7 +98,7 @@ class Station:
         except ET.ParseError:
             try:
                 # The first row does not appear to be closed properly
-                # i.e., the terminal "</tr>" appears as "<tr>" instead 
+                # i.e., the terminal "</tr>" appears as "<tr>" instead
                 section = section.replace("<tr>", "</tr>", 2)
                 section = section.replace("</tr>", "<tr>", 1)
                 table = ET.fromstring(section)
@@ -113,10 +113,11 @@ class Station:
         for row in rows:
             if len(row) == 1:
                 # There is no parking. HTML should look like
-                # <tr><td colspan="4">There is no parking available at this 
+                # <tr><td colspan="4">There is no parking available at this
                 # station.</td></tr> with some whitespace thrown in.
-                assert (row.find('td').text == 
-                        "There is no parking available at this station.")
+                if (row.find('td').text !=
+                        "There is no parking available at this station."):
+                    raise RuntimeError()
                 self._parking = [('N/A', 0, 0)]
             else:
                 assert len(row) == 4
@@ -168,11 +169,12 @@ if __name__ == "__main__":
     try:
         outname = sys.argv[2]
     except IndexError:
-        outname = xmlfilename
-        
+        print(__doc__)
+        sys.exit(1)
+
     tree = ET.parse(xmlfilename)
     stations = [Station(e) for e in tree.iter(tag='station')]
     for station in stations:
         station.set_lines()
-        station.set_parking()
+#        station.set_parking()
     tree.write(outname)
