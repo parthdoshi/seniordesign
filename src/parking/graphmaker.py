@@ -153,74 +153,7 @@ class TkGraph(Graph):
             for dest in graph[node]:
                 self.paint_line(node, dest)
 
-
-class PILGraph(Graph):
-
-    NODE_RADIUS = 5
-
-    def __init__(self, image, **kw):
-        self.image = image
-        self.draw = ImageDraw.Draw(image)
-        super(PILGraph, self).__init__(**kw)
-
-    def create_node(self, node):
-        """
-        Create a node.
-
-        :param node: a tuple ``(x, y)`` of image coordinates.
-        """
-        super(PILGraph, self).create_node(node)
-        x, y = node
-        r = PILGraph.NODE_RADIUS
-        self.draw.ellipse(
-            (x - r, y - r, x + r, y + r),
-            fill='black', outline='white')
-
-    def create_edge(self, node1, node2, length):
-        """
-        Create an edge.
-
-        :param node1: tuple of image coordinates ``(x1, y1)`` for first node
-        :param node2: tuple of image coordinates ``(x2, y2)`` for second node
-        """
-        super(PILGraph, self).create_edge(node1, node2, length)
-        x1, y1 = node1
-        x2, y2 = node2
-        if self.is_directed():
-            arrow = 'last'
-        else:
-            arrow = 'both'
-        self.draw_arrow((x1, y1, x2, y2), arrow=arrow, fill='yellow')
-
-    def draw_arrow(self, xy, arrow='both', fill='black', width=1):
-        """
-        Draw an arrow between the two points.
-
-        :param arrow: One of ``'first'``, ``'last'``, ``'both'``
-        """
-        import math
-        def rotate(x, y, theta):
-            return (math.cos(theta) * x - math.sin(theta) * y,
-                    math.sin(theta) * x - math.sin(theta) * x)
-        def tri(x, y, theta, scale=1):
-            pts = [(0, 2), (2, 0), (0, -2)]
-            pts = [rotate(i, j, theta) for i, j in pts]
-            return [(x + i * scale, y + j * scale) for i, j in pts]
-
-        self.draw.line(xy, fill, width)
-        x1, y1, x2, y2 = xy
-        theta = math.atan2(y2 - y1, x2 - x1)
-        if arrow in {'both', 'last'}:
-            self.draw.polygon(tri(x2, y2, theta, width), fill=fill)
-        if arrow in {'both', 'first'}:
-            self.draw.polygon(tri(x1, y1, math.pi + theta, width), fill=fill)
-
-    def dump(self, imagefilename):
-        """Save the image to a file."""
-        self.image.save(imagefilename)
-
-
-class ImageGraph(PILGraph, TkGraph):
+class ImageGraph(TkGraph):
 
     def __init__(self):
         self.root = Tkinter.Tk()
@@ -287,11 +220,6 @@ class ImageGraph(PILGraph, TkGraph):
                                                    title=message)
         if graphname:
             Graph.dump(self, graphname)
-        message = "Save the image file"
-        imagename = tkFileDialog.asksaveasfilename(parent=self.root,
-                                                   title=message)
-        if imagename:
-            PILGraph.dump(self, imagename)
 
     def make_widgets(self, width, height, cwidth, cheight, bg):
         """Make the necessary widgets and bindings."""
@@ -451,6 +379,7 @@ class EdgePurger(ImageGraph):
         """Remove an edge from the graph."""
         nodes = self.get_edge_nodes(edge_id)
         self.delete_edge(nodes)
+        self.canvas.
 
     def get_edge_nodes(self, edge):
         """Get the nodes (as tuples) at the edge vertices."""
