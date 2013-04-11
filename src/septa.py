@@ -121,13 +121,25 @@ def flow_to_csv(flow, filename):
                              for n2 in nodes))
                 f.write('\n')    
 
+def get_capacity(graph):
+    """Load the capacity of each link."""
+    raise NotImplementedError
+
+def get_demand(graph):
+    """Load the per node demand."""
+    raise NotImplementedError
+
 if __name__ == "__main__":
     print "Starting"
     graph = make_guido_graph(SEPTA_DB)
     print "Loaded the DB into a graph"
     nxgraph = guido_to_nx(graph)
     print "Made the NetworkX graph"
-    flow = simplex(nxgraph)
+    capacity = get_capacity(graph)
+    print "Loaded the network's capacity"
+    demand = get_demand(graph)
+    print "Loaded the network's demand"
+    flow = simplex(nxgraph, demand, capacity)
     print "Found the optimal flow"
     flow_to_csv(flow, OUTPUT)
     print "Wrote the results to %s" % OUTPUT
