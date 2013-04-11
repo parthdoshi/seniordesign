@@ -14,8 +14,7 @@ nodes.
 1.1: Added keyboard/mouse bindings to ease navigation
 1.0: Basic Functionality: click & dump
 """
-
-from PIL import Image, ImageDraw
+from PIL import Image
 import Tkinter
 import ImageTk
 import tkFileDialog
@@ -60,7 +59,7 @@ class Graph(object):
         """
         node1, node2 = edge
         del self.graph[node1][node2]
-        if self.is_directed():
+        if not self.is_directed():
             del self.graph[node2][node1]
 
     def is_directed(self):
@@ -123,7 +122,7 @@ class TkGraph(Graph):
         :param node2: tuple of canvas coordinates ``(x2, y2)`` for second node
         """
         super(TkGraph, self).create_edge(node1, node2, length)
-        self.pain_edge(node1, node2)
+        self.paint_edge(node1, node2)
 
     def paint_edge(self, node1, node2):
         """Draw an edge on the canvas."""
@@ -151,7 +150,7 @@ class TkGraph(Graph):
             self.paint_node(node)
         for node in graph:
             for dest in graph[node]:
-                self.paint_line(node, dest)
+                self.paint_edge(node, dest)
 
 class ImageGraph(TkGraph):
 
@@ -171,9 +170,8 @@ class ImageGraph(TkGraph):
         self.root.geometry("%dx%d" % (cwidth, cheight))
         self.root.minsize(cwidth, cheight)
         self.dir_var = Tkinter.IntVar()
-        self.make_widgets(width, height, cwidth, cheight, bgfilename)
-        super(ImageGraph, self).__init__(image=im,
-                                         canvas=self.canvas,
+        self.make_widgets(width, height, bgfilename)
+        super(ImageGraph, self).__init__(canvas=self.canvas,
                                          directed=True)
 
     def start(self):
@@ -221,7 +219,7 @@ class ImageGraph(TkGraph):
         if graphname:
             Graph.dump(self, graphname)
 
-    def make_widgets(self, width, height, cwidth, cheight, bg):
+    def make_widgets(self, width, height, bg):
         """Make the necessary widgets and bindings."""
         self.dir_var.set(1)
         frame = Tkinter.Frame(self.root)
@@ -362,6 +360,7 @@ class EdgePurger(ImageGraph):
         self.load_file(graphfile)
         self.selected = None
         self.canvas.bind("<Button-1>", self.mouse_click)
+        self.root.bind("d", self.remove_edge)
 
     def load_file(self, graphfile):
         graph = {}
@@ -375,28 +374,33 @@ class EdgePurger(ImageGraph):
                                    if n2 > 0)
         self.load(graph)
 
-    def remove_edge(self, edge_id):
+    def remove_edge(self, _):
         """Remove an edge from the graph."""
-        nodes = self.get_edge_nodes(edge_id)
-        self.delete_edge(nodes)
-        self.canvas.
+        if self.selected:
+            self.delete_edge(self.selected[1])
+            self.canvas.delete(self.selected[0])
+            self.root.bind('r', lambda e: 0)
+            self.selected = None
 
     def get_edge_nodes(self, edge):
         """Get the nodes (as tuples) at the edge vertices."""
         x1, y1, x2, y2 = self.canvas.coords(edge)
+        self.canvas.create_text(x2, y2, text='X', tag="vanishing",
+                                fill='white')
+        self.root.after(1000, lambda: self.canvas.delete("vanishing"))
         assert (x1, y1) in self.graph
-        assert (x2, y2) in self.graph
+        assert (x2, y2) in self.graph[(x1, y1)]
         return (x1, y1), (x2, y2)
 
     def mouse_click(self, event):
         x = self.canvas.canvasx(event.x)
         y = self.canvas.canvasy(event.y)
-        print "%f, %f" % (x, y)
         edges = list(self.select_items(x, y, 'edge'))
         if edges:
             self.select_edge(edges[0])
         else:
             self.deselect()
+            self.root.bind('r', lambda e: 0)
         if len(edges) > 1:
             self.root.bind('r', self.multiple_edges_callback(edges))
 
@@ -412,10 +416,11 @@ class EdgePurger(ImageGraph):
         self.deselect()
         self.canvas.addtag_withtag('selected', edge_id)
         self.canvas.itemconfig(edge_id, fill='white', width=3)
-        self.selected = edge_id
+        self.selected = (edge_id, self.get_edge_nodes(edge_id))
 
     def deselect(self):
         """Deselect edge."""
+        self.canvas.delete("vanishing")
         self.canvas.itemconfig('selected', fill='red', width=1)
         self.canvas.dtag('selected', 'selected')
         self.selected = None
