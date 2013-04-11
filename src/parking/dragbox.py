@@ -63,6 +63,7 @@ class DragBox(object):
             self.canvas.coords(self.box, self.mouse_x, self.mouse_y,
                                self.mouse_x, self.mouse_y)
             self.canvas.itemconfig(self.box, state='normal')
+            self.canvas.tag_raise(self.box, 'all')
             self.click_hook((self.mouse_x, self.mouse_y) * 2)
 
     def mouse_drag(self, event):

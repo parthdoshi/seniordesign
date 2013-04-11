@@ -14,12 +14,18 @@ nodes.
 1.1: Added keyboard/mouse bindings to ease navigation
 1.0: Basic Functionality: click & dump
 """
+
+from __future__ import division
 from PIL import Image
+
 import Tkinter
 import ImageTk
 import tkFileDialog
+import tkMessageBox
 import dragbox
 import csv
+
+import xml.etree.ElementTree as ET
 
 class Graph(object):
 
@@ -34,7 +40,7 @@ class Graph(object):
         :param node: Any hashable object
         """
         if node in self.graph:
-            raise KeyError("%s is already in graph!" % str(node))
+            raise KeyError("%s is already in graph!" % repr(node))
         self.graph[node] = {}
 
     def create_edge(self, node1, node2, length):
@@ -46,7 +52,7 @@ class Graph(object):
         :param length: length or cost of the edge.
         """
         if node2 in self.graph[node1]:
-            raise ValueError("%r is already in graph" % tuple(node1, node2))
+            raise ValueError("%s is already in graph" % repr((node1, node2)))
         self.graph[node1][node2] = length
         if not self.is_directed():
             self.graph[node2][node1] = length
@@ -68,6 +74,21 @@ class Graph(object):
         """
         return self._is_directed
 
+    def load_filename(self, filename):
+        """
+        Create a graph from a csv file and load it.
+        """
+        graph = {}
+        with open(filename, 'rb') as csvfile:
+            reader =  csv.reader(csvfile)
+            nodes = map(eval, next(reader)[1:])
+            for line in reader:
+                base = eval(line.pop(0))
+                graph[base] = dict((n1, n2)
+                                   for n1, n2 in zip(nodes, map(float, line))
+                                   if n2 > 0)
+        self.load(graph)
+
     def load(self, graph):
         """
         Replace the current graph with another one.
@@ -87,6 +108,18 @@ class Graph(object):
                 f.write(','.join(format(self.graph[node].get(n2, -1), ".3f")
                                  for n2 in nodes))
                 f.write('\n')
+
+    def __iter__(self):
+        return iter(self.graph)
+
+    def __getitem__(self, item):
+        return self.graph[item]
+
+    def __delitem__(self, item):
+        del self.graph[item]
+
+    def __setitem__(self, item, value):
+        self.graph[item] = value
 
 
 class TkGraph(Graph):
@@ -152,15 +185,122 @@ class TkGraph(Graph):
             for dest in graph[node]:
                 self.paint_edge(node, dest)
 
-class ImageGraph(TkGraph):
+    def save_ps(self, filename):
+        """
+        Save the canvas contents to a postscript file.
+        """
+        self.canvas.postscript(file=filename, colormod='color')
+
+
+class SVGGraph(Graph):
+
+    NODE_RADIUS = "10"
+
+    def __init__(self, width, height, **kw):
+        super(SVGGraph, self).__init__(**kw)
+        self.tree = ET.parse("template.svg")
+        self.svg = self.tree.getroot()
+        self.svg.set('width', str(width))
+        self.svg.set('height', str(height))
+        tri = ET.SubElement(self.svg, 'marker', id="triangle",
+                            viewBox="0 0 10 10", refX="0", refY="5",
+                            markerUnits="strokeWidth", markerWidth="4",
+                            markerHeight="3", orient="auto")
+        ET.SubElement(tri, 'path', d="M 0 0 L 10 5 L 0 10 z")
+        self.svg.append(tri)
+        self.scene = {}
+
+    def create_node(self, node):
+        """
+        Add a node to the graph.
+
+        :param node: Should be a pair of coordinates ``(x, y)``
+        """
+        super(SVGGraph, self).create_node(node)
+        self.append_node(node)
+
+    def append_node(self, node):
+        if node in self.scene:
+            raise KeyError("%s is already in the scene" % repr(node))
+        self.scene[node] = ET.SubElement(self.svg, 'circle',
+                                         {'cx': str(node[0]),
+                                          'cy': str(node[1]),
+                                          'r': self.NODE_RADIUS,
+                                          'class': 'node'})
+
+    def create_edge(self, node1, node2, length):
+        """
+        Creates a new edge.
+
+        :param node1: first node of the edge.
+        :param node2: second node of the edge.
+        """
+        super(SVGGraph, self).create_edge(node1, node2, length)
+        self.append_edge(node1, node2)
+
+    def append_edge(self, node1, node2):
+        if (node1, node2) in self.scene:
+            raise KeyError("%s is already in the scene" %
+                           repr((node1, node2)))
+        self.scene[(node1, node2)] = ET.SubElement(self.svg, 'line',
+                                                   {'x1': str(node1[0]),
+                                                    'y1':str(node1[1]),
+                                                    'x2':str(node2[0]),
+                                                    'y2':str(node2[1]),
+                                                    'class':'edge'})
+
+    def draw_polygon(self, polygon):
+        """Draw a polygon on the svg."""
+        points = ["%d,%d" % p for p in polygon]
+        ET.SubElement(self.svg, 'polygon',
+                      {'points': ' '.join(points),
+                       'class': 'lot'})
+
+    def load(self, graph):
+        """
+        Replace the current graph.
+        """
+        super(SVGGraph, self).load(graph)
+        self.clear()
+        for node in graph:
+            self.append_node(node)
+        for node in graph:
+            for n2 in graph[node]:
+                self.append_edge(node, n2)
+
+    def clear(self):
+        """Clears the current drawing."""
+        for obj, elem in self.scene.items():
+            if elem.get('class') in ('node', 'edge'):
+                self.svg.remove(elem)
+
+    def delete_edge(self, edge):
+        """Remove an edge from the graph."""
+        super(SVGGraph, self).delete_edge(edge)
+        elem = self.scene[edge]
+        self.svg.remove(elem)
+        del self.scene[edge]
+
+    def save_svg(self, filename):
+        with open(filename, 'w') as f:
+            f.write('<?xml version="1.0"? standalone="no">\n')
+            f.write('<?xml-stylesheet href="styles.css" type="text/css"?>\n')
+            f.write('<!DOCTYPE svg PUBLIC"-//W3C//DTD SVG 1.1//EN" '
+                    '"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n')
+            self.tree.write(f, encoding='utf-8', xml_declaration=False)
+
+class ImageGraph(SVGGraph, TkGraph):
 
     def __init__(self):
         self.root = Tkinter.Tk()
         self.root.title("graphmaker")
 
         message = "Select background image"
+        types = [('images', '.png'), ('images', '.jpg'),
+                 ('images', '.jpeg'), ('all files', '*')]
         bgfilename = tkFileDialog.askopenfilename(parent=self.root,
-                                                          title=message)
+                                                  filetypes=types,
+                                                  title=message)
         if not bgfilename:
             raise ValueError("Invalid background filename")
         im = Image.open(bgfilename)
@@ -170,9 +310,13 @@ class ImageGraph(TkGraph):
         self.root.geometry("%dx%d" % (cwidth, cheight))
         self.root.minsize(cwidth, cheight)
         self.dir_var = Tkinter.IntVar()
+        self.autosave_var = Tkinter.IntVar()
         self.make_widgets(width, height, bgfilename)
-        super(ImageGraph, self).__init__(canvas=self.canvas,
+        super(ImageGraph, self).__init__(width=width,
+                                         height=height,
+                                         canvas=self.canvas,
                                          directed=True)
+        self.root.after(1000 * 60, self.autosave)
 
     def start(self):
         self.root.mainloop()
@@ -212,22 +356,71 @@ class ImageGraph(TkGraph):
             self.canvas.xview('scroll', -1, 'units')
 
     def save(self):
-        """Save the image and graph files."""
+        """Open a dialog to save the graph file."""
         message = "Save the graph CSV file"
+        types = [('csv files', '.csv'), ('all files', '*')]
         graphname = tkFileDialog.asksaveasfilename(parent=self.root,
+                                                   filetypes=types,
                                                    title=message)
         if graphname:
             Graph.dump(self, graphname)
+            tkMessageBox.showinfo("Success", "Saved graph to %s" % graphname)
+
+    def load_file(self):
+        """Open a dialog to load a graph from file."""
+        message = "Select the graph to load"
+        types = [('csv files', '.csv'), ('all files', '*')]
+        graphname = tkFileDialog.askopenfilename(parent=self.root,
+                                                 filetypes=types,
+                                                 title=message)
+        if graphname:
+            self.load_filename(graphname)
+
+    def autosave(self):
+        if self.autosave_var.get():
+            Graph.dump(self, "autosave.csv")
+        self.root.after(60 * 1000, self.autosave)
+
+    def save_ps_file(self):
+        message = "Select where to save the file"
+        types = [('postscript files', '.ps'), ('all files', '*')]
+        imagename = tkFileDialog.asksaveasfilename(parent=self.root,
+                                                   filetypes=types,
+                                                   title=message)
+        if imagename:
+            self.save_ps(imagename)
+            tkMessageBox.showinfo("Success", "Image saved to %s" % imagename)
+
+    def save_svg_file(self):
+        message = "Select where to save the file"
+        types = [('svg files', '.svg'), ('all files', '*')]
+        imagename = tkFileDialog.asksaveasfilename(parent=self.root,
+                                                   filetypes=types,
+                                                   title=message)
+        if imagename:
+            self.save_svg(imagename)
+            tkMessageBox.showinfo("Success", "Image saved to %s" % imagename)
+
 
     def make_widgets(self, width, height, bg):
         """Make the necessary widgets and bindings."""
         self.dir_var.set(1)
-        frame = Tkinter.Frame(self.root)
-        frame.pack(side=Tkinter.TOP)
-        Tkinter.Checkbutton(frame,
+        self.topframe = Tkinter.Frame(self.root)
+        self.topframe.pack(side=Tkinter.TOP)
+        Tkinter.Checkbutton(self.topframe,
+                            variable=self.autosave_var,
+                            text="Autosave?").pack(side=Tkinter.LEFT)
+        Tkinter.Checkbutton(self.topframe,
                             text="Directed Arcs?",
                             variable=self.dir_var).pack(side=Tkinter.LEFT)
-        Tkinter.Button(frame, text="Save to File", command=self.save).pack()
+        Tkinter.Button(self.topframe, text="Load Graph File",
+                       command=self.load_file).pack(side=Tkinter.LEFT)
+        Tkinter.Button(self.topframe, text="Save Graph to File",
+                       command=self.save).pack(side=Tkinter.LEFT)
+        Tkinter.Button(self.topframe, text="Save PS to File",
+                       command=self.save_ps_file).pack(side=Tkinter.LEFT)
+        Tkinter.Button(self.topframe, text="Save SVG to File",
+                       command=self.save_svg_file).pack(side=Tkinter.LEFT)
         frame = Tkinter.Frame(self.root)
         frame.pack(fill='both', expand=True)
         self.vscroll = Tkinter.Scrollbar(frame)
@@ -256,7 +449,6 @@ class NodeMaker(ImageGraph):
         super(NodeMaker, self).__init__()
         self.startnode_id = None
         self.canvas.bind("<Button-1>", self.mouse_click)
-
 
     def create_edge_handle(self, node_id):
         """Process a click to create an edge."""
@@ -297,14 +489,15 @@ class NodeMaker(ImageGraph):
 
 class EdgeMaker(ImageGraph):
 
-    def __init__(self, nodefile):
+    def __init__(self):
         super(EdgeMaker, self).__init__()
-        nodes = eval(open(nodefile).read())
-        for node in nodes:
-            self.create_node(node)
         self.box = dragbox.DragBox(self.canvas)
         self.box.release_hook = self.select_nodes
         self.selection = []
+        self.cycles = Tkinter.IntVar()
+        Tkinter.Checkbutton(self.topframe,
+                            text="Complete Cycles?",
+                            variable=self.cycles).pack(side=Tkinter.LEFT)
         self.root.bind("r", lambda e: self.rotate_labels())
         self.root.bind("a", lambda e: self.apply_edges())
         self.root.bind("d", lambda e: self.deselect())
@@ -338,11 +531,19 @@ class EdgeMaker(ImageGraph):
         self.label_selection()
 
     def apply_edges(self):
-        for base, target in zip(self.selection, self.selection[1:]):
+        if self.cycles.get():
+            pairs = zip(self.selection,
+                        self.selection[1:] + [self.selection[0]])
+        else:
+            pairs = zip(self.selection, self.selection[1:])
+        for base, target in pairs:
             n1 = self.get_node_center(base)
             n2 = self.get_node_center(target)
             length = self.segment_length(n1, n2)
-            self.create_edge(n1, n2, length)
+            try:
+                self.create_edge(n1, n2, length)
+            except ValueError:  # Edge already exists
+                pass
         self.deselect()
 
     def deselect(self):
@@ -355,24 +556,11 @@ class EdgeMaker(ImageGraph):
 
 class EdgePurger(ImageGraph):
 
-    def __init__(self, graphfile):
+    def __init__(self):
         super(EdgePurger, self).__init__()
-        self.load_file(graphfile)
         self.selected = None
         self.canvas.bind("<Button-1>", self.mouse_click)
         self.root.bind("d", self.remove_edge)
-
-    def load_file(self, graphfile):
-        graph = {}
-        with open(graphfile, 'rb') as csvfile:
-            reader =  csv.reader(csvfile)
-            nodes = map(eval, next(reader)[1:])
-            for line in reader:
-                base = eval(line.pop(0))
-                graph[base] = dict((n1, n2)
-                                   for n1, n2 in zip(nodes, map(float, line))
-                                   if n2 > 0)
-        self.load(graph)
 
     def remove_edge(self, _):
         """Remove an edge from the graph."""
@@ -400,9 +588,10 @@ class EdgePurger(ImageGraph):
             self.select_edge(edges[0])
         else:
             self.deselect()
-            self.root.bind('r', lambda e: 0)
         if len(edges) > 1:
             self.root.bind('r', self.multiple_edges_callback(edges))
+        else:
+            self.root.bind('r', lambda e: 0)
 
     def multiple_edges_callback(self, edges):
         """Create a callback to rotate the selected edge."""
@@ -428,7 +617,7 @@ class EdgePurger(ImageGraph):
 
 if __name__ == "__main__":
     try:
-        app = EdgePurger('graph.csv')
+        app = EdgePurger()
     except ValueError:
         pass
     else:
