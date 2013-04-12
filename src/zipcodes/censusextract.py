@@ -15,8 +15,6 @@ class DataReader(object):
         self.current_id = None
         self.current_poly = []
         self.polys = {}
-        self.multiple = False
-        self.active = False
 
     def readline(self):
         line = self.file.readline()
@@ -35,21 +33,23 @@ class DataReader(object):
         if m:
             self.add_coords(*m.groups())
             return 1
+        try:
+            id_ = int(line)
+        except ValueError:
+            pass
+        else:
+            self.start_poly(id_)
+            return 1
         return 0
 
     def start_poly(self, id_):
-        if id_ == "-99999":
-            self.multiple = True
-            self.polys[self.current_id] = [self.polys[self.current_id]]
-        else:
+        if id_ != -99999:
             self.current_id = int(id_)
-            self.multiple = False
 
     def end_poly(self):
-        if self.multiple:
-            self.polys[self.current_id].append(self.current_poly)
-        else:
-            self.polys[self.current_id] = self.current_poly
+        if self.current_id not in self.polys:
+            self.polys[self.current_id] = []
+        self.polys[self.current_id].append(tuple(self.current_poly))
         self.current_poly = []
 
     def add_coords(self, x, y):
@@ -106,30 +106,83 @@ class ZipCodes(object):
     def __init__(self, infofilename, datafilename):
         self.info = InfoReader(infofilename)
         self.data = DataReader(datafilename)
+        self.digested = {}
+        self.name_to_id = {}
 
     def read(self):
         for _ in self.info:
             pass
         for _ in self.data:
             pass
-        print set(self.info.data).symmetric_difference(self.data.polys)
+        for id_, d in self.info.data.items():
+            # http://www.census.gov/geo/ZCTA/zctafaq.html#Q10
+            if d['NAME'].endswith('HH'):  # 'HH' := hydrographic feature
+                del self.info.data[id_]
+                del self.data.polys[id_]
+            elif d['NAME'].endswith('XX'):
+                # 'XX' := rural area that was too sparsely populated.
+                # There are no real nzipcodes ending in 0
+                d['NAME'] = d['NAME'].replace('X', '0')
+                d['FIPS CODE(S)'] = d['FIPS CODE(S)'].replace('X', '0')
+
+    def digest(self):
+        names = set(x['NAME'] for x in self.info.data.values())
+        for id_, d in self.info.data.items():
+            try:
+                self.name_to_id[d['NAME']].append(id_)
+            except KeyError:
+                self.name_to_id[d['NAME']] = [id_]
+        for name in names:
+            self.digested[name] = ps = []
+            for id_ in self.name_to_id[name]:
+                ps.append(self.data.polys[id_])
 
     def save_to_file(self, filename):
-        ids = self.info.data.keys()
         output = []
-        for id_ in ids:
-            output.append(self.info.data[id_]['NAME'] + ':')
-            output.append(repr(self.data.polys[id_]))
-            output.append('\n')
-        open(filename, 'w').write(''.join(output))
+        print len(self.digested)
+        for name, shapes in self.digested.items():
+            output.extend([name,
+                           ':',
+                           repr(shapes),
+                           '\n'])
+        s = ''.join(output)
+        open(filename, 'w').write(s)
+
+#    @staticmethod
+#    def shape_to_str(shapes):
+#        out = []
+#        for shape in shapes:
+#            for poly in shape:
+#                out.append('(')
+#                for c1, c2 in poly:
+#                    out.extend(['(',
 
 INFO_FILE = "zt42_d00a.dat"
 DATA_FILE = "zt42_d00.dat"
 
-def main():
-    z = ZipCodes(INFO_FILE, DATA_FILE)
+def dat_to_fov(info_file, data_file, outfile):
+    """
+    Convert the two files into a colon-delimited file.
+
+    The output format has one zip code per line, and each line
+    is formatted as follows:
+
+        zipcode:[shape1, shape2, ... shape_n]
+
+    where each shape is of the form
+
+        (poly1, poly2, ... poly_n)
+
+    where the first polygon is part of the shape and the remaining
+    polygon cut out holes from it. Each polygon is of the form
+
+        ((x1, y1), (x2, y2), ... (x_n, y_n))
+    """
+    z = ZipCodes(info_file, data_file)
     z.read()
-    z.save_to_file('zipcode-polys')
+    z.digest()
+    z.save_to_file(outfile)
+    print "Saved to %s" % outfile
 
 if __name__ == "__main__":
-    main()
+    dat_to_fov(INFO_FILE, DATA_FILE, 'zipcode-polys.txt')
