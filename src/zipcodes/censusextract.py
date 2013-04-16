@@ -145,20 +145,8 @@ class ZipCodes(object):
                            ':',
                            repr(shapes),
                            '\n'])
-        s = ''.join(output)
+        s = ''.join(output).replace('[', '(').replace(']', ')')
         open(filename, 'w').write(s)
-
-#    @staticmethod
-#    def shape_to_str(shapes):
-#        out = []
-#        for shape in shapes:
-#            for poly in shape:
-#                out.append('(')
-#                for c1, c2 in poly:
-#                    out.extend(['(',
-
-INFO_FILE = "zt42_d00a.dat"
-DATA_FILE = "zt42_d00.dat"
 
 def dat_to_fov(info_file, data_file, outfile):
     """
@@ -184,5 +172,9 @@ def dat_to_fov(info_file, data_file, outfile):
     z.save_to_file(outfile)
     print "Saved to %s" % outfile
 
+INFO_FILE = "zt42_d00a.dat"
+DATA_FILE = "zt42_d00.dat"
+POLY_FILE = 'zipcode-polys.txt'
+
 if __name__ == "__main__":
-    dat_to_fov(INFO_FILE, DATA_FILE, 'zipcode-polys.txt')
+    dat_to_fov(INFO_FILE, DATA_FILE, POLY_FILE)
