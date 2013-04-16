@@ -22,28 +22,6 @@ def sort_cycle(cycle, key=None):
     i = cycle.index(m)
     return cycle[i:] + cycle[:i]
 
-def get_cycles():
-    """One-off function used to generate the parking lot polygons."""
-    g = Graph()
-    g.load_filename('lot-nodes-1.csv')
-    ng = to_nx(g)
-    cycles = nx.cycle_basis(ng)
-    g.load_filename('lot-nodes-2.csv')
-    ng = to_nx(g)
-    cycles.extend(nx.cycle_basis(ng))
-    cycles = set(map(tuple, map(sort_cycle, cycles)))
-    return cycles
-
-def purge_loose_nodes():
-    """One-off function used to remove disconnected nodes from the graph."""
-    g = Graph()
-    g.load_filename('graph-full.csv')
-    ng = to_nx(g)
-    for n in list(g):
-        if not ng.neighbors(n):
-            del g[n]
-    g.dump('graph.csv')
-
 
 class LotGraph(ImageGraph):
 
