@@ -6,26 +6,29 @@ import tempfile
 import os
 import subprocess
 import re
+import datetime
 
 LINK_DB = "final.db"
 DEMAND_FILE = "demand.csv"
 OUTPUT = "septa-results.csv"
 STADIUM_NODE = 0
-STADIUM_STOPS = {21349: 4,   # 11th St & Zinkoff
-                 28170: 7,   # 7th St & Pattison
-                 31461: 9,   # 10th St & Packer Av
-                 29432: 9,   # 10th St & Packer Av  FS
-                 356: 6,     # Broad St & Pattison Av 1
-                 31487: 6,   # Broad St & Pattison Av 2 - FS
-                 363: 6,     # Pattison Av & Broad St - FS
-                 152: 6,     # Broad St & Hartranft St
-                 28169: 6,   # Pattison Av & 7th St
-                 }
+STADIUM_STOPS = {
+    21349: 4,   # 11th St & Zinkoff
+    28170: 7,   # 7th St & Pattison
+    31461: 9,   # 10th St & Packer Av
+    29432: 9,   # 10th St & Packer Av  FS
+    356: 6,     # Broad St & Pattison Av 1
+    31487: 6,   # Broad St & Pattison Av 2 - FS
+    363: 6,     # Pattison Av & Broad St - FS
+    152: 6,     # Broad St & Hartranft St
+    28169: 6,   # Pattison Av & 7th St
+    }
 GAMETIME = 16 * 60
 
 def main():
     # There's an if __name__ == "__main__": main() at the bottom
-    main_sim(GAMETIME)
+    import cProfile
+    cProfile.run('main_sim(GAMETIME)', 'profile.stats')
 
 def main_sim(gametime):
     print "Starting"
@@ -62,9 +65,9 @@ def get_demand(gametime):
     The output is a mapping ``{node: demand}``, where ``node`` is either of
     the form ``(id_, time)`` or ``"zipcode"``.
     """
-    csv = [l.split(',') for l in open(DEMAND_FILE).read().split('\n')]
+    csv = [l.split(',') for l in open(DEMAND_FILE).read().split('\n') if l]
     demand = {}
-    for row in csv:
+    for row in csv[1:]:
         demand[row[0]] = sum(map(int, row[1]))
         time = gametime - 80
         for v in map(int, row[1:]):
@@ -99,16 +102,16 @@ def make_guido_graph(dbfile):
     There is the addition of the type 'wait' for waiting links.
     """
     connection = sqlite3.connect(
-            dbfile, detect_types=sqlite3.PARSE_DECLTYPES)
+            dbfile,
+            detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
     cursor = connection.cursor()
-
     # Build the initial node list as (origin,departure-time) and
     # (destination,arrival-time) pairs
-    cursor.execute('SELECT DISTINCT origin, departure '
-                   'FROM links')
+    cursor.execute('SELECT DISTINCT origin, departure as "dep [TimeStamp]" '
+                   'FROM links_temp;')
     nodes = map(tuple, cursor.fetchall())
-    cursor.execute('SELECT DISTINCT destination, arrival '
-                   'FROM links')
+    cursor.execute('SELECT DISTINCT dest, arrival as "arrival [TimeStamp]" '
+                   'FROM links_temp;')
     nodes.extend(map(tuple, cursor.fetchall()))
 
     # Use sorting to insert waiting links of the form
@@ -117,12 +120,17 @@ def make_guido_graph(dbfile):
     nodes = sorted(set(nodes))
     graph = {}
     stadium_nodes = []
+    print "Node count: %d, starting to make edges" % len(nodes)
     for i, node in enumerate(nodes):
-        cursor.execute('SELECT destination, arrival, type '
-                       'FROM links '
-                       'WHERE origin = ? AND departure = ?',
+        cursor.execute('SELECT dest, arrival as "arrival [TimeStamp]", type '
+                       'FROM links_temp '
+                       'WHERE origin=? AND departure=?;',
                        node)
-        dests, arrs, types = zip(*cursor.fetchall())
+        try:
+            dests, arrs, types = zip(*cursor.fetchall())
+        except ValueError: # no values
+            graph[node] = set()
+            continue
         costs = [int((arr - node[1]).seconds / 60) for arr in arrs]
         dapairs = map(tuple, zip(dests, arrs))
         graph[node] = set(zip(dapairs, costs, types))
@@ -143,24 +151,34 @@ def make_guido_graph(dbfile):
             time = node[1] + cost
             graph[node].add(((STADIUM_NODE, time), cost, 'walk'))
             stadium_nodes.append((STADIUM_NODE, time))
+
+        if not (i+1) % 1000:
+            print "Processed 1000 nodes"
     # Now add the waiting links for the stadium nodes
     stadium_nodes.sort()
+    print "Node count: %d, making stadium nodes" % len(graph)
     for n1, n2 in zip(stadium_nodes, stadium_nodes[1:]):
         cost = n2[1] - n1[1]
         graph[n1] = set([(n2, cost, 'wait')])
-    graph[n2] = set()  # the last stadium node has nowhere to go
+    try:
+        graph[stadium_nodes[-1]] = set()
+    except IndexError:
+        pass
     # Now we add the zipcode nodes
+    print "Going to make zipcode nodes"
     cursor.execute('SELECT DISTINCT zipcode FROM stops')
     zipcodes = zip(*cursor.fetchall())[0]
     for zipcode in zipcodes:
-        cursor.execute('SELECT links.origin, links.departure '
+        cursor.execute('SELECT origin, '
+                              'departure as "dep [TimeStamp]" '
                        'FROM links '
                        'INNER JOIN stops '
-                       'ON links.origin=stops.stop_id '
-                       'WHERE stops.zipcode=?',
+                       'ON origin=stop_id '
+                       'WHERE stops.zipcode=?;',
                        (zipcode,))
         graph[zipcode] = set((tuple(r), 0, 'init')
                              for r in cursor.fetchall())
+    print "Node count: %d, finished making graph" % len(graph)
     return graph
 
 def simplex(graph, demand, capacity):
@@ -179,9 +197,10 @@ def simplex(graph, demand, capacity):
               ``flow_dict[node1][node2]`` is the flow across edge
               ``(node1, node2)``
     """
-    fd, name = tempfile.mkstemp
-    f = os.fdopen(fd)
+    fd, name = tempfile.mkstemp()
+    f = os.fdopen(fd, 'w', 1024 * 1024)
     node_ids = make_dimacs(graph, demand, capacity, f)
+    print "Made DIMACS file %s" % name
     f.close()
     flow = run_ook(name)
     output = {}
@@ -222,22 +241,34 @@ def make_dimacs(graph, demand, capacity, filelike):
     corresponding python object.
     """
     num_nodes = len(graph)
-    arcs = sum(map(len(graph.values())))
+    arcs = sum(map(len, graph.values()))
     filelike.write('p min %d %d' % (num_nodes, arcs))
-    nodes = sorted(graph)
+    print "Going to begin writing %d nodes and %d arcs" % (num_nodes, arcs)
+    nodes = sorted(graph.keys())
     for i, node in enumerate(nodes):
-        if not demand.get(node, 0):
-            continue
-        filelike.write('n %d %d' % (i, demand[node]))
+        if demand.get(node, 0):
+            filelike.write('n %d %d' % (i, demand[node]))
+        if not (i+1) % 1000:
+            print "Wrote 1000 nodes"
 
+    e = 0
     for i, node in enumerate(nodes):
         for target, cost, _ in graph[node]:
-            j = nodes.index(target)
+            try:
+                j = nodes.index(target)
+            except ValueError:  # FIXME: DYN IN FINAL VERSION??
+                nodes.append(target)
+                graph[node] = set()
+                j = len(nodes) - 1
+                #print "Node not in dict!"
             filelike.write('a %d %d 0 %d %d' %
                            (i,
                             j,
                             capacity.get((node, target), -1),
                             cost))
+            e += 1
+        if not e % 1000:
+            print "Wrote 1000 edges"
     return dict(enumerate(nodes))
 
 def flow_to_csv(flow, filename):
@@ -268,6 +299,22 @@ def flow_to_csv(flow, filename):
             f.write(','.join(str(flow[node].get(n2, ''))
                              for n2 in nodes))
             f.write('\n')
+
+class TimeStamp(datetime.datetime):
+
+    @staticmethod
+    def to_str(stamp):
+        return stamp.strftime("%H:%M:%S")
+
+    @staticmethod
+    def from_str(string):
+        h = int(string[:2])
+        h = h % 24
+        string = format(h, '0>2d') + string[2:]
+        return TimeStamp.strptime(string, "%H:%M:%S")
+
+sqlite3.register_adapter(TimeStamp, TimeStamp.to_str)
+sqlite3.register_converter("TimeStamp", TimeStamp.from_str)
 
 if __name__ == "__main__":
     main()
