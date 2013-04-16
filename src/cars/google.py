@@ -10,7 +10,6 @@ total travel times and total distances.
 from __future__ import division
 import urllib2
 import urllib
-import sys
 import json
 import time
 
