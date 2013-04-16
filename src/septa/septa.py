@@ -107,10 +107,10 @@ def make_guido_graph(dbfile):
     cursor = connection.cursor()
     # Build the initial node list as (origin,departure-time) and
     # (destination,arrival-time) pairs
-    cursor.execute('SELECT DISTINCT origin, departure as "dep [TimeStamp]" '
+    cursor.execute('SELECT DISTINCT origin, departure '
                    'FROM links_temp;')
     nodes = map(tuple, cursor.fetchall())
-    cursor.execute('SELECT DISTINCT dest, arrival as "arrival [TimeStamp]" '
+    cursor.execute('SELECT DISTINCT dest, arrival '
                    'FROM links_temp;')
     nodes.extend(map(tuple, cursor.fetchall()))
 
@@ -122,16 +122,15 @@ def make_guido_graph(dbfile):
     stadium_nodes = []
     print "Node count: %d, starting to make edges" % len(nodes)
     for i, node in enumerate(nodes):
-        cursor.execute('SELECT dest, arrival as "arrival [TimeStamp]", type '
+        cursor.execute('SELECT dest, arrival, duration, type '
                        'FROM links_temp '
                        'WHERE origin=? AND departure=?;',
                        node)
         try:
-            dests, arrs, types = zip(*cursor.fetchall())
+            dests, arrs, costs, types = zip(*cursor.fetchall())
         except ValueError: # no values
             graph[node] = set()
             continue
-        costs = [int((arr - node[1]).seconds / 60) for arr in arrs]
         dapairs = map(tuple, zip(dests, arrs))
         graph[node] = set(zip(dapairs, costs, types))
 
@@ -169,8 +168,7 @@ def make_guido_graph(dbfile):
     cursor.execute('SELECT DISTINCT zipcode FROM stops')
     zipcodes = zip(*cursor.fetchall())[0]
     for zipcode in zipcodes:
-        cursor.execute('SELECT origin, '
-                              'departure as "dep [TimeStamp]" '
+        cursor.execute('SELECT origin, departure '
                        'FROM links '
                        'INNER JOIN stops '
                        'ON origin=stop_id '
