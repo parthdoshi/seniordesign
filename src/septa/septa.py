@@ -1,20 +1,27 @@
 
 from __future__ import division
-from matplotlib import nxutils
 
 import sqlite3
-import numpy
 import tempfile
 import os
 import subprocess
 import re
 
 LINK_DB = "final.db"
-STOPS_DB = "stops.db"
 DEMAND_FILE = "demand.csv"
 OUTPUT = "septa-results.csv"
-STADIUM_STOP_ID = 0
-GAMETIME
+STADIUM_NODE = 0
+STADIUM_STOPS = {21349: 4,   # 11th St & Zinkoff
+                 28170: 7,   # 7th St & Pattison
+                 31461: 9,   # 10th St & Packer Av
+                 29432: 9,   # 10th St & Packer Av  FS
+                 356: 6,     # Broad St & Pattison Av 1
+                 31487: 6,   # Broad St & Pattison Av 2 - FS
+                 363: 6,     # Pattison Av & Broad St - FS
+                 152: 6,     # Broad St & Hartranft St
+                 28169: 6,   # Pattison Av & 7th St
+                 }
+GAMETIME = 16 * 60
 
 def main():
     # There's an if __name__ == "__main__": main() at the bottom
@@ -22,7 +29,9 @@ def main():
 
 def main_sim(gametime):
     print "Starting"
-    capacity = get_capacity()
+    graph = make_guido_graph(LINK_DB)
+    print "Made the python graph."
+    capacity = get_capacity(graph)
     print "Loaded the network's capacity"
     demand = get_demand(gametime)
     print "Loaded the network's demand"
@@ -31,9 +40,13 @@ def main_sim(gametime):
     flow_to_csv(flow, OUTPUT)
     print "Wrote the results to %s" % OUTPUT
 
-def get_capacity():
+def get_capacity(graph):
     """Load the capacity of each link."""
-    raise NotImplementedError
+    capacity = {}
+    for node, neighbors in graph.items():
+        capacity[node] = {node2: 100  # FIXME
+                          for node2, _, _ in neighbors}
+    return capacity
 
 def get_demand(gametime):
     """
@@ -46,7 +59,8 @@ def get_demand(gametime):
     where each row indicates the number of people from each zip code arriving
     at the specified interval in minutes relative to the game start time.
 
-    The output is a mapping
+    The output is a mapping ``{node: demand}``, where ``node`` is either of
+    the form ``(id_, time)`` or ``"zipcode"``.
     """
     csv = [l.split(',') for l in open(DEMAND_FILE).read().split('\n')]
     demand = {}
@@ -58,9 +72,9 @@ def get_demand(gametime):
             for _ in xrange(4):
                 time += 5
                 try:
-                    demand[(STADIUM_STOP_ID, time)] -= val
+                    demand[(STADIUM_NODE, time)] -= val
                 except KeyError:
-                    demand[(STADIUM_STOP_ID, time)] = -val
+                    demand[(STADIUM_NODE, time)] = -val
     return demand
 
 def make_guido_graph(dbfile):
@@ -88,14 +102,13 @@ def make_guido_graph(dbfile):
             dbfile, detect_types=sqlite3.PARSE_DECLTYPES)
     cursor = connection.cursor()
 
-    # Build the node list as (origin,departure-time) and
-    # (destination,arrival-time) pairs and zipcode source
-    # nodes
+    # Build the initial node list as (origin,departure-time) and
+    # (destination,arrival-time) pairs
     cursor.execute('SELECT DISTINCT origin, departure '
-                   'FROM septa')
+                   'FROM links')
     nodes = map(tuple, cursor.fetchall())
     cursor.execute('SELECT DISTINCT destination, arrival '
-                   'FROM septa')
+                   'FROM links')
     nodes.extend(map(tuple, cursor.fetchall()))
 
     # Use sorting to insert waiting links of the form
@@ -103,9 +116,10 @@ def make_guido_graph(dbfile):
     # ensuring the links are only among consecutive nodes
     nodes = sorted(set(nodes))
     graph = {}
+    stadium_nodes = []
     for i, node in enumerate(nodes):
-        cursor.execute('SELECT destination, arrival, type'
-                       'FROM links'
+        cursor.execute('SELECT destination, arrival, type '
+                       'FROM links '
                        'WHERE origin = ? AND departure = ?',
                        node)
         dests, arrs, types = zip(*cursor.fetchall())
@@ -114,23 +128,37 @@ def make_guido_graph(dbfile):
         graph[node] = set(zip(dapairs, costs, types))
 
         try:  # This entire block is for the waiting links
-            name, time = nodes[i+1]  # Reason for sorting
+            next_node, time = nodes[i+1]
         except IndexError:
             pass
         else:
-            if name == node[0]:
+            if next_node == node[0]:
                 cost = int((time - node[1]).seconds / 60)
                 t = 'wait'
                 graph[node].add((nodes[i+1], cost, t))
+
+        # Now we (potentially) add the links to the stadium
+        if node[0] in STADIUM_STOPS:
+            cost = STADIUM_STOPS[node[0]]
+            time = node[1] + cost
+            graph[node].add(((STADIUM_NODE, time), cost, 'walk'))
+            stadium_nodes.append((STADIUM_NODE, time))
+    # Now add the waiting links for the stadium nodes
+    stadium_nodes.sort()
+    for n1, n2 in zip(stadium_nodes, stadium_nodes[1:]):
+        cost = n2[1] - n1[1]
+        graph[n1] = set([(n2, cost, 'wait')])
+    graph[n2] = set()  # the last stadium node has nowhere to go
+    # Now we add the zipcode nodes
     cursor.execute('SELECT DISTINCT zipcode FROM stops')
-    zipcodes = map(int, zip(*cursor.fetchall())[0])
+    zipcodes = zip(*cursor.fetchall())[0]
     for zipcode in zipcodes:
         cursor.execute('SELECT links.origin, links.departure '
                        'FROM links '
                        'INNER JOIN stops '
                        'ON links.origin=stops.stop_id '
                        'WHERE stops.zipcode=?',
-                       str(zipcode))
+                       (zipcode,))
         graph[zipcode] = set((tuple(r), 0, 'init')
                              for r in cursor.fetchall())
     return graph
@@ -240,124 +268,6 @@ def flow_to_csv(flow, filename):
             f.write(','.join(str(flow[node].get(n2, ''))
                              for n2 in nodes))
             f.write('\n')
-
-class Matcher(object):
-
-    """
-    Creates an object to match points to their containing region.
-
-    :param containers: a mapping of ids to containers.
-
-    In this representation a container is a sequence of shapes, and a shape
-    is a sequence of polygons. The interior of a shape is defined as the
-    interior of the first polygon minus the interior of the remaining
-    polygons. The interior of a container is defined as the union of the
-    interiors of its shapes.
-    """
-
-    def __init__(self, containers=None):
-        if containers is None:
-            self.containers = {}
-        else:
-            self.containers = containers
-        self.vertex_in = {}
-        self.bake_verteces()
-
-    def bake_verteces(self):
-        """Populate the vertex_in dictionary."""
-        self.vertex_in = {}
-        for id_, container in self.containers.items():
-            for shape in container:
-                for poly in shape:
-                    for x, y in poly:
-                        if (x, y) in self.vertex_in:
-                            self.vertex_in[(x, y)].add(id_)
-                        else:
-                            self.vertex_in[(x, y)] = set([id_])
-
-    def get_match(self, x, y):
-        """Return the id of the containing shape."""
-        node = self.get_nearest_node(x, y)
-        for container in self.vertex_in[node]:
-            if self.contains(self.containers[container], (x, y)):
-                return container
-
-    def contains(self, container, pt):
-        """Check whether a container contains pt."""
-        for shape in container:
-            if self.shape_contains(shape, pt):
-                return True
-        return False
-
-    def shape_contains(self, shape, pt):
-        """Check whether a shape contains pt."""
-        base = shape[0]
-        holes = shape[1:]
-        if self.poly_contains(base, pt):
-            for hole in holes:
-                if self.poly_contains(hole, pt):
-                    return False
-            return True
-        return False
-
-    def poly_contains(self, poly, pt):
-        """Check whether a polynomial contains pt."""
-        poly = numpy.array(poly, float)
-        nxutils.pnpoly(pt[0], pt[1], poly)
-
-    def get_nearest_node(self, x, y):
-        """Return the nearest node to (x, y) belonging to a polygon."""
-        return min(self.vertex_in.keys(),
-                   key=lambda n: self.get_length((x, y), n))
-
-    def load(self, filename):
-        """Load the zipcode file into the object."""
-        self.containers = {}
-        with open(filename) as f:
-            for line in f:
-                id_, container = line.split(":")
-                id_ = int(id_)
-                container = eval(container)
-                self.containers[id_] = container
-        self.bake_verteces()
-
-    @staticmethod
-    def get_length(n1, n2):
-        """Get the length of a segment."""
-        x1, y1 = n1
-        x2, y2 = n2
-        return ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** .5
-
-
-def set_station_zips(zipcodefile):
-    """
-    Set the zipcodes in the septa stop db.
-    """
-    matcher = Matcher()
-    matcher.load(zipcodefile)
-    connection = sqlite3.connect(STOPS_DB,
-                                 detect_types=sqlite3.PARSE_DECLTYPES)
-    cursor = connection.cursor()
-
-    cursor.execute('SELECT stop_id, stop_lat, stop_lon '
-                   'FROM stops'
-                   "WHERE zipcode=''"
-        )
-    stops = cursor.fetchall()
-    i = 0
-    for id_, lat, lon in stops:
-        zipcode = matcher.get_match(lat, lon)
-        cursor.execute('UPDATE stops '
-                       'SET zipcode=? '
-                       'WHERE stop_id=? ',
-                       (zipcode, id_,))
-        i = (i + 1) % 100
-        if not i:
-            connection.commit()
-            print "Commited 100 transactions"
-    if i:
-        connection.commit()
-        print "Committed %d transactions" % i
 
 if __name__ == "__main__":
     main()

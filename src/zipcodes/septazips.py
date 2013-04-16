@@ -13,7 +13,11 @@ LINK_DB = "../septa/final.db"
 ZIPCODES = 'zipcode-polys.txt'
 
 def main():
-    matcher = GoogleMatcher()
+    #matcher = GoogleMatcher()
+    matcher = make_matcher(ZIPCODES)
+    print "Made matcher"
+    #import pdb; pdb.set_trace()
+    matcher.visualize(5000, 5000)
     set_station_zips(matcher)
 
 def make_matcher(zipcodefile):
@@ -74,7 +78,7 @@ def set_station_zips(matcher):
     for id_, lat, lon in stops:
         try:
             zipcode = matcher.get_match(lat, lon)
-        except ValueError:
+        except Exception:
             if i:
                 connection.commit()
                 print "Committed %d transactions" % i
@@ -206,33 +210,42 @@ class Matcher(object):
         hscroll = Tkinter.Scrollbar(frame)
         hscroll.pack(side=Tkinter.BOTTOM, fill=Tkinter.X)
         canvas = Tkinter.Canvas(frame,
-                                     bg="white",
-                                     scrollregion=(-width,-height, 0, 0),
-                                     yscrollcommand=vscroll.set,
-                                     xscrollcommand=hscroll.set)
+                                bg="white",
+                                bd=2,
+                                scrollregion=(0, 0, width,height),
+                                yscrollcommand=vscroll.set,
+                                xscrollcommand=hscroll.set)
         canvas.pack(fill='both', expand=True)
         vscroll.config(command=canvas.yview)
         hscroll.config(command=canvas.xview,
                             orient=Tkinter.HORIZONTAL)
         nodes = self.vertex_in.keys()
+        if not nodes:
+            raise KeyError()
         min_x = min(nodes)[0]
         max_x = max(nodes)[0]
         max_y = max(zip(*nodes)[1])
         min_y = min(zip(*nodes)[1])
-        scale = min(width / max_x - min_x, height / max_y - min_y)
-        xoffset = min_x
-        yoffset = min_y
+        scale = min(width / (max_x - min_x), height / (max_y - min_y))
+#        for node in nodes:
+#            x, y = node
+#            x = (x - min_x) * scale
+#            y = height - (y - min_y) * scale
+#            canvas.create_arc([x-5, y-5, x+5, y+5], fill='black')
         for container in self.containers.values():
             for shape in container:
-                self.draw_shape(shape, canvas, scale, xoffset, yoffset)
+                self.draw_shape(shape, canvas, scale, height, (min_x, min_y))
         root.mainloop()
 
     @staticmethod
-    def draw_shape(shape, canvas, scale, xoffset, yoffset):
+    def draw_shape(shape, canvas, scale, height, origin):
         """Draw a shape on the canvas."""
-        poly = [(xoffset - x, yoffset - y) for x, y in shape[0]]
-        poly = sum([(x * scale, y * scale) for x, y in poly], tuple())
-        canvas.create_polygon(poly, fill='#66f', outline='black')
+        poly = []
+        for x, y in shape[0]:
+            x = (x - origin[0]) * scale
+            y = height - (y - origin[1]) * scale
+            poly.extend((x, y))
+        canvas.create_polygon(poly, fill='black', outline='black')
 
 
 if __name__ == "__main__":
