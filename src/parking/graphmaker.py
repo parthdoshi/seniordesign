@@ -43,6 +43,12 @@ class Graph(object):
             raise KeyError("%s is already in graph!" % repr(node))
         self.graph[node] = {}
 
+    def delete_node(self, node):
+        """Removes a node from the graph."""
+        del self.graph[node]
+        for targets in self.graph.values():
+            targets.pop(node, None)
+
     def create_edge(self, node1, node2, length):
         """
         Creates a new edge.
@@ -270,7 +276,7 @@ class SVGGraph(Graph):
 
     def clear(self):
         """Clears the current drawing."""
-        for obj, elem in self.scene.items():
+        for _, elem in self.scene.items():
             if elem.get('class') in ('node', 'edge'):
                 self.svg.remove(elem)
 
@@ -281,6 +287,13 @@ class SVGGraph(Graph):
         self.svg.remove(elem)
         del self.scene[edge]
 
+    def delete_node(self, node):
+        """Remove a node from the graph."""
+        super(SVGGraph, self).delete_node(node)
+        elem = self.scene[node]
+        self.svg.remove(elem)
+        del self.scene[node]
+
     def save_svg(self, filename):
         with open(filename, 'w') as f:
             f.write('<?xml version="1.0"? standalone="no">\n')
@@ -290,6 +303,20 @@ class SVGGraph(Graph):
             self.tree.write(f, encoding='utf-8', xml_declaration=False)
 
 class ImageGraph(SVGGraph, TkGraph):
+
+    """
+    ImageGraph Base class.
+
+    This class provides the following features:
+
+    - Background Image prompt
+    - Autosave
+    - Directed Checkbox
+    - Load Graph
+    - Save Graph
+    - Save PS
+    - Save SVG (broken)
+    """
 
     def __init__(self):
         self.root = Tkinter.Tk()
@@ -445,10 +472,27 @@ class ImageGraph(SVGGraph, TkGraph):
 
 class NodeMaker(ImageGraph):
 
+    """
+    Useful for adding nodes to graphs.
+
+    This class defines the following additional feature:
+
+    - Mouse-click mapped to node or edge creation intelligently
+    - K-Key = delete selected node
+    """
+
     def __init__(self):
         super(NodeMaker, self).__init__()
         self.startnode_id = None
         self.canvas.bind("<Button-1>", self.mouse_click)
+        self.root.bind("k", self.kill_node)
+
+    def kill_node(self, _):
+        """Remove the selected node, if any."""
+        if self.startnode_id:
+            self.delete_node(self.get_node_center(self.startnode_id))
+            self.canvas.delete(self.startnode_id)
+            self.startnode_id = None
 
     def create_edge_handle(self, node_id):
         """Process a click to create an edge."""
@@ -488,6 +532,17 @@ class NodeMaker(ImageGraph):
             self.startnode_id = None
 
 class EdgeMaker(ImageGraph):
+
+    """
+    This class provides the following features:
+
+    - Dragbox bound to Mouse-1
+    - Cycles Checkbox
+    - R-Key = rotate selection labels
+    - A-Key = Create edges in selection
+    - D-Key = Deselect nodes
+    - F-Key = Flip (reverse) selection labels
+    """
 
     def __init__(self):
         super(EdgeMaker, self).__init__()
@@ -556,11 +611,18 @@ class EdgeMaker(ImageGraph):
 
 class EdgePurger(ImageGraph):
 
+    """
+    This class provides the following features:
+
+    - Mouse-1 bound to select/deselect edge
+    - K-Key = Delete (kill) the selected edges
+    - R-Key = Cycle through nearby edges
+    """
     def __init__(self):
         super(EdgePurger, self).__init__()
         self.selected = None
         self.canvas.bind("<Button-1>", self.mouse_click)
-        self.root.bind("d", self.remove_edge)
+        self.root.bind("k", self.remove_edge)
 
     def remove_edge(self, _):
         """Remove an edge from the graph."""
@@ -568,7 +630,7 @@ class EdgePurger(ImageGraph):
             self.delete_edge(self.selected[1])
             self.canvas.delete(self.selected[0])
             self.root.bind('r', lambda e: 0)
-            self.selected = None
+            self.deselect()
 
     def get_edge_nodes(self, edge):
         """Get the nodes (as tuples) at the edge vertices."""
@@ -616,8 +678,14 @@ class EdgePurger(ImageGraph):
 
 
 if __name__ == "__main__":
+    import sys
+    sys.argv.append('')
+    kind = {'purger': EdgePurger,
+            'edgemaker': EdgeMaker,
+            'nodemaker': NodeMaker,
+            'plain': ImageGraph}.get(sys.argv[1], ImageGraph)
     try:
-        app = EdgePurger()
+        app = kind()
     except ValueError:
         pass
     else:
