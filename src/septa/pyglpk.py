@@ -46,8 +46,21 @@ class Graph(object):
         """Add num vertices to the graph."""
         GLPK.glp_add_vertices(self.graphp, ctypes.c_int(num))
 
+    def has_node(self, num):
+        """Check whether the graph has the given node or not."""
+        return 0 < num <= self.graphp[0].nv
+
+    def assert_has_node(self, num):
+        """Raise IndexError if the graph does not have the given node."""
+        if not self.has_node(num):
+            if not num:
+                raise IndexError("Node indeces are 1-based.")
+            raise IndexError("Node index %d exceeds node count" % num)
+
     def add_edge(self, base_num, dest_num):
         """Add an edge to the graph."""
+        self.assert_has_node(base_num)
+        self.assert_has_node(dest_num)
         GLPK.glp_add_arc(self.graphp,
                          ctypes.c_int(base_num),
                          ctypes.c_int(dest_num))
@@ -57,8 +70,10 @@ class Graph(object):
         for nodep in self.iter_nodes():
             self.set_demand(nodep, 0)
 
-    def set_demand(self, nodep, value):
-        """Set the demand for a node, given its pointer."""
+    def set_demand(self, nx, value):
+        """Set the demand for a node given its index."""
+        self.assert_has_node(nx)
+        nodep = self.graphp[0].v[nx]
         data = self.node_data(nodep)
         data.rhs = value
 #        val = ctypes.c_double(value)
@@ -68,9 +83,18 @@ class Graph(object):
 #            ctypes.byref(val),
 #            ctypes.sizeof(ctypes.c_double))
 
-    def set_edge_properties(self, edgep, low=None, cap=None, cost=None):
-        """Set the data properties for an arc."""
-        data = self.edge_data(edgep)
+    def set_edge_properties(self, edge, low=None, cap=None, cost=None):
+        """Set the data properties for an edge."""
+        self.assert_has_node(edge[0])
+        self.assert_has_node(edge[1])
+        np1 = self.graphp[0].v[edge[0]]
+        for edgep in self.get_out_edges(np1[0]):
+            if edge[1] == edgep[0].head[0].i:
+                break
+        try:
+            data = self.edge_data(edgep)
+        except NameError:
+            raise KeyError("(%d, %d) is not in graph!" % edge)
         if low:
             data.low = low
         if cap:
@@ -96,26 +120,36 @@ class Graph(object):
                                      self._adata.x.offset,
                                      self._vdata.pi.offset)
         if ret:
-            raise RuntimeError("Mincost failed with code %d" % ret)
-        flow = {}
+            retcodes = {
+                10: "No primal feasible solution",
+                18: "Problems with data",
+                19: "Integer overflow",
+                5: "Program failure; report to <bug-glpk@gnu.org>"}
+            if ret == 10:
+                raise ValueError("No primal feasible solution!")
+            raise RuntimeError("Mincost failed with code %d: %s" %
+                               (ret, retcodes[ret]))
+        flowvec = {}
         for edge_pt in self.iter_edges():
             i = edge_pt[0].tail[0].i
             j = edge_pt[0].head[0].i
-            try:
-                flow[i][j] = self.edge_data(edge_pt).x
-            except KeyError:
-                flow[i] = {j: self.edge_data(edge_pt).x}
-        return flow, sol.value
+            flow = self.edge_data(edge_pt).x
+            if flow:
+                try:
+                    flowvec[i][j] = flow
+                except KeyError:
+                    flowvec[i] = {j: flow}
+        return flowvec, sol.value
 
     def iter_nodes(self):
         """Iterate over all the node pointers in the graph."""
         return (self.graphp[0].v[i + 1]
-                for i in xrange(self.graphp.value.nv))
+                for i in xrange(self.graphp[0].nv))
 
     def iter_edges(self):
         """Iterate over all the edge pointers in the graph."""
-        itertools.chain(self.get_out_edges(node[0])
-                        for node in self.iter_nodes())
+        return itertools.chain(*(self.get_out_edges(node[0])
+                                 for node in self.iter_nodes()))
 
     def get_out_edges(self, node):
         """Iterate over the outgoing edges from node."""
@@ -136,7 +170,7 @@ class Graph(object):
     def edge_data(self, edge_pointer):
         """Return the adata struct associated with the edge data."""
         data = edge_pointer[0].data
-        return ctypes.cast(data, ctypes.POINTER(self._adata))
+        return ctypes.cast(data, ctypes.POINTER(self._adata))[0]
 
 
 def is_null_p(pt):
@@ -158,8 +192,8 @@ class cVertex(ctypes.Structure):
                 ('in', ctypes.POINTER(cArc)),
                 ('out', ctypes.POINTER(cArc))]
 
-cArc._fields_ = [('tail', cVertex),
-                 ('head', cVertex),
+cArc._fields_ = [('tail', ctypes.POINTER(cVertex)),
+                 ('head', ctypes.POINTER(cVertex)),
                  ('data', ctypes.c_void_p),
                  ('temp', ctypes.c_void_p),
                  ('t_prev', ctypes.POINTER(cArc)),

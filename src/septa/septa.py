@@ -2,13 +2,10 @@
 from __future__ import division
 
 import sqlite3
-import tempfile
-import os
-import subprocess
-import re
+import pyglpk
 
 LINK_DB = "final.db"
-TABLE_NAME = "links_temp"
+TABLE_NAME = "links"
 DEMAND_FILE = "demand.csv"
 OUTPUT = "septa-results.csv"
 
@@ -36,21 +33,29 @@ def main_sim(gametime):
     print "Starting"
     graph = make_guido_graph(LINK_DB)
     print "Made the python graph."
-    capacity = get_capacity(graph)
+    capacity = get_capacity()
     print "Loaded the network's capacity"
     demand = get_demand(gametime)
     print "Loaded the network's demand"
-    flow = simplex(graph, demand, capacity)
+    flow = run_ook(graph, demand, capacity)
     print "Found the optimal flow, size %d" % len(flow)
     flow_to_csv(flow, OUTPUT)
     print "Wrote the results to %s" % OUTPUT
 
-def get_capacity(graph):
+def get_capacity():
     """Load the capacity of each link."""
+    connection = sqlite3.connect(
+            LINK_DB,
+            detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
+    cursor = connection.cursor()
+    cursor.execute('SELECT origin, departure, dest, arrival, capacity ' +
+                   'FROM %s;' % TABLE_NAME)
     capacity = {}
-    for node, neighbors in graph.items():
-        capacity[node] = {node2: 100  # FIXME
-                          for node2, _, _ in neighbors}
+    for orig, dep, dest, arr, cap in cursor.fetchall():
+        try:
+            capacity[(orig, dep)][(dest, arr)] = cap
+        except KeyError:
+            capacity[(orig, dep)] = {(dest, arr): cap}
     return capacity
 
 def get_demand(gametime):
@@ -77,9 +82,9 @@ def get_demand(gametime):
             for _ in xrange(4):
                 time += 5
                 try:
-                    demand[(STADIUM_NODE, time)] -= val
+                    demand[(STADIUM_NODE, minutes_to_str(time))] -= val
                 except KeyError:
-                    demand[(STADIUM_NODE, time)] = -val
+                    demand[(STADIUM_NODE, minutes_to_str(time))] = -val
     return demand
 
 def make_guido_graph(dbfile):
@@ -150,21 +155,27 @@ def make_guido_graph(dbfile):
         if node[0] in STADIUM_STOPS:
             cost = STADIUM_STOPS[node[0]]
             time = node[1] + cost
-            graph[node].add(((STADIUM_NODE, time), cost, 'walk'))
-            stadium_nodes.append((STADIUM_NODE, time))
+            raise StupidityError
+            graph[node].add(((STADIUM_NODE, minutes_to_str(time)),
+                             cost, 'walk'))
+            stadium_nodes.append((STADIUM_NODE, minutes_to_str(time)))
 
     # Now add the waiting links for the stadium nodes
+    new_nodes = set((STADIUM_NODE, minutes_to_str(GAMETIME + 5 * i))
+                    for i in xrange(-15, 13)).difference(stadium_nodes)
+    stadium_nodes.extend(new_nodes)
     stadium_nodes.sort()
     print "Node count: %d, making stadium nodes" % len(graph)
     for n1, n2 in zip(stadium_nodes, stadium_nodes[1:]):
-        cost = n2[1] - n1[1]
+        cost = get_delta_mins(n1[1], n2[1])
         graph[n1] = set([(n2, cost, 'wait')])
+        print n1
     try:
         graph[stadium_nodes[-1]] = set()
     except IndexError:
         pass
     # Now we add the zipcode nodes
-    print "Going to make zipcode nodes"
+    print "Node count: %d, making zipcode nodes" % len(graph)
     cursor.execute('SELECT DISTINCT zipcode FROM stops')
     zipcodes = zip(*cursor.fetchall())[0]
     for zipcode in zipcodes:
@@ -176,12 +187,14 @@ def make_guido_graph(dbfile):
                        (zipcode,))
         graph[zipcode] = set((tuple(r), 0, 'init')
                              for r in cursor.fetchall())
+        graph[zipcode].add(((STADIUM_NODE, minutes_to_str(GAMETIME - 75)),
+                            1000, 'debug'))
     print "Node count: %d, finished making graph" % len(graph)
     return graph
 
-def simplex(graph, demand, capacity):
+def run_ook(graph, demand, capacity):
     """
-    Run the network simplex algorithm on a graph.
+    Run the Ford-Fulkerson algorithm via GLPK.
 
     :param graph: a python graph as returned by make_guido_graph
     :param demand: a mapping {node: demand}. Note that demands should sum
@@ -194,87 +207,38 @@ def simplex(graph, demand, capacity):
               ``{base: {target1: flow, target2: flow}}`` so that
               ``flow_dict[node1][node2]`` is the flow across edge
               ``(node1, node2)``
-    """
-    fd, name = tempfile.mkstemp()
-    f = os.fdopen(fd, 'w', 1024 * 1024)
-    node_ids = make_dimacs(graph, demand, capacity, f)
-    print "Made DIMACS file %s" % name
-    flow = run_ook(name)
-    f.close()
-    print "Ran OOK!"
-    output = {}
-    for i, d in flow.items():
-        node = node_ids[i]
-        output[node] = {node_ids[j]: f for j, f in d.items()}
-    return output
 
-def run_ook(filename):
-    """
-    Run the Ford-Fulkerson algorithm on a DIMACS file.
-
-    Returns a double mapping ``flowdict`` such that ``flowdict[i][j]``
-    is the amount of flow across edge ``(i, j)``.
-    """
-    retcodes = {
-        10: "No primal feasible solution",
-        18: "Problems with data",
-        19: "Integer overflow",
-        5: "Program failure; report to <bug-glpk@gnu.org>"}
-    try:
-        output = subprocess.check_output(['./ook.exe', filename])
-    except subprocess.CalledProcessError as e:
-        if e.returncode in retcodes:
-            raise ValueError(retcodes[e.returncode])
-        elif e.returncode == 1:
-            raise IOError(e.output)
-        raise
-    arcline = re.compile('arc ([0-9]+)->([0-9]+): x = +(-?[0-9]+); '
-                         'lambda = +-?[0-9]+')
-    flowdict = {}
-    for line in output.split('\n'):
-        m = arcline.match(line)
-        try:
-            src, dest, flow = map(int, m.groups())
-        except AttributeError:
-            print line
-            continue
-        try:
-            flowdict[src][dest] = flow
-        except KeyError:
-            flowdict[src] = {dest: flow}
-    print "Flowdict len:%d" % len(flowdict)
-    return flowdict
-
-def make_dimacs(graph, demand, capacity, filelike):
-    """
-    Write a DIMACS file of a graph.
-
-    Returns a mapping of ``node_id``\ s written to the file to the
-    corresponding python object.
     """
     nodes = set(graph.keys())
     for vals in graph.values():
         nodes.update(t[0] for t in vals)
     num_nodes = len(nodes)
     arcs = sum(map(len, graph.values()))
-    filelike.write('p min %d %d\n' % (num_nodes, arcs))
-    print "Going to begin writing %d nodes and %d arcs" % (num_nodes, arcs)
+    glpk = pyglpk.Graph()
+    glpk.add_vertices(num_nodes)
+    print "Going to begin making %d nodes and %d arcs" % (num_nodes, arcs)
     nodes = sorted(nodes)
-    for i, node in enumerate(nodes):
+    alias = {node: i + 1 for  i, node in enumerate(nodes)}
+    for node in nodes:
         if demand.get(node, 0):
-            filelike.write('n %d %d\n' % (i + 1, demand[node]))
-
-    order = {node: i + 1 for  i, node in enumerate(nodes)}
-    for i, node in enumerate(nodes):
-        for target, cost, _ in graph.get(node, []):
-            j = order[target]
-            filelike.write('a %d %d 0 %d %d\n' %
-                           (i + 1,
-                            j,
-                            capacity.get((node, target), 100000),
-                            cost))
-
-    return {i + 1: n for i, n in enumerate(nodes)}
+            glpk.set_demand(alias[node], demand[node])
+    print "Set the node demands"
+    for node, i in alias.items():
+        for target, cost, _ in graph[node]:  # remove .get in final
+            j = alias[target]
+            glpk.add_edge(i, j)
+            glpk.set_edge_properties((i, j), low=0,
+                                     cap=capacity.get((node, target), 90000),
+                                     cost=cost)
+    print "Made GLPK graph object"
+    flowdict = glpk.mincost_okalg()[0]
+    print "Flowdict len:%d" % len(flowdict)
+    node_ids = {i + 1: node for i, node in enumerate(nodes)}
+    output = {}
+    for i, d in flowdict.items():
+        node = node_ids[i]
+        output[node] = {node_ids[j]: f for j, f in d.items()}
+    return output
 
 def flow_to_csv(flow, filename):
     """
@@ -310,6 +274,12 @@ def get_delta_mins(t1, t2):
     h1, m1, s1 = map(int, t1.split(':'))
     h2, m2, s2 = map(int, t2.split(':'))
     return int(60 * (h2 - h1) + m2 - m1 + (s2 - s1) / 60.0)
+
+def minutes_to_str(mins):
+    """Convert the number of minutes since midnight into a string."""
+    h = int(mins / 60)
+    m = mins % 60
+    return "%02d:%02d:00" % (h, m)
 
 if __name__ == "__main__":
     main()
