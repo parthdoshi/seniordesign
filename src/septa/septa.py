@@ -6,11 +6,13 @@ import tempfile
 import os
 import subprocess
 import re
-import datetime
 
 LINK_DB = "final.db"
+TABLE_NAME = "links_temp"
 DEMAND_FILE = "demand.csv"
 OUTPUT = "septa-results.csv"
+
+
 STADIUM_NODE = 0
 STADIUM_STOPS = {
     21349: 4,   # 11th St & Zinkoff
@@ -39,7 +41,7 @@ def main_sim(gametime):
     demand = get_demand(gametime)
     print "Loaded the network's demand"
     flow = simplex(graph, demand, capacity)
-    print "Found the optimal flow"
+    print "Found the optimal flow, size %d" % len(flow)
     flow_to_csv(flow, OUTPUT)
     print "Wrote the results to %s" % OUTPUT
 
@@ -108,10 +110,10 @@ def make_guido_graph(dbfile):
     # Build the initial node list as (origin,departure-time) and
     # (destination,arrival-time) pairs
     cursor.execute('SELECT DISTINCT origin, departure '
-                   'FROM links_temp;')
+                   'FROM %s;' % TABLE_NAME)
     nodes = map(tuple, cursor.fetchall())
     cursor.execute('SELECT DISTINCT dest, arrival '
-                   'FROM links_temp;')
+                   'FROM %s;' % TABLE_NAME)
     nodes.extend(map(tuple, cursor.fetchall()))
 
     # Use sorting to insert waiting links of the form
@@ -122,8 +124,8 @@ def make_guido_graph(dbfile):
     stadium_nodes = []
     print "Node count: %d, starting to make edges" % len(nodes)
     for i, node in enumerate(nodes):
-        cursor.execute('SELECT dest, arrival, duration, type '
-                       'FROM links_temp '
+        cursor.execute('SELECT dest, arrival, duration, type ' +
+                       'FROM %s ' % TABLE_NAME +
                        'WHERE origin=? AND departure=?;',
                        node)
         try:
@@ -140,7 +142,7 @@ def make_guido_graph(dbfile):
             pass
         else:
             if next_node == node[0]:
-                cost = int((time - node[1]).seconds / 60)
+                cost = get_delta_mins(node[1], time)
                 t = 'wait'
                 graph[node].add((nodes[i+1], cost, t))
 
@@ -151,8 +153,6 @@ def make_guido_graph(dbfile):
             graph[node].add(((STADIUM_NODE, time), cost, 'walk'))
             stadium_nodes.append((STADIUM_NODE, time))
 
-        if not (i+1) % 1000:
-            print "Processed 1000 nodes"
     # Now add the waiting links for the stadium nodes
     stadium_nodes.sort()
     print "Node count: %d, making stadium nodes" % len(graph)
@@ -199,8 +199,9 @@ def simplex(graph, demand, capacity):
     f = os.fdopen(fd, 'w', 1024 * 1024)
     node_ids = make_dimacs(graph, demand, capacity, f)
     print "Made DIMACS file %s" % name
-    f.close()
     flow = run_ook(name)
+    f.close()
+    print "Ran OOK!"
     output = {}
     for i, d in flow.items():
         node = node_ids[i]
@@ -214,21 +215,34 @@ def run_ook(filename):
     Returns a double mapping ``flowdict`` such that ``flowdict[i][j]``
     is the amount of flow across edge ``(i, j)``.
     """
-    output = subprocess.Popen(['./ook.exe', filename],
-                              stdout=subprocess.PIPE)
+    retcodes = {
+        10: "No primal feasible solution",
+        18: "Problems with data",
+        19: "Integer overflow",
+        5: "Program failure; report to <bug-glpk@gnu.org>"}
+    try:
+        output = subprocess.check_output(['./ook.exe', filename])
+    except subprocess.CalledProcessError as e:
+        if e.returncode in retcodes:
+            raise ValueError(retcodes[e.returncode])
+        elif e.returncode == 1:
+            raise IOError(e.output)
+        raise
     arcline = re.compile('arc ([0-9]+)->([0-9]+): x = +(-?[0-9]+); '
                          'lambda = +-?[0-9]+')
     flowdict = {}
-    for line in output.stdout:
+    for line in output.split('\n'):
         m = arcline.match(line)
         try:
             src, dest, flow = map(int, m.groups())
         except AttributeError:
+            print line
             continue
         try:
             flowdict[src][dest] = flow
         except KeyError:
             flowdict[src] = {dest: flow}
+    print "Flowdict len:%d" % len(flowdict)
     return flowdict
 
 def make_dimacs(graph, demand, capacity, filelike):
@@ -238,36 +252,29 @@ def make_dimacs(graph, demand, capacity, filelike):
     Returns a mapping of ``node_id``\ s written to the file to the
     corresponding python object.
     """
-    num_nodes = len(graph)
+    nodes = set(graph.keys())
+    for vals in graph.values():
+        nodes.update(t[0] for t in vals)
+    num_nodes = len(nodes)
     arcs = sum(map(len, graph.values()))
-    filelike.write('p min %d %d' % (num_nodes, arcs))
+    filelike.write('p min %d %d\n' % (num_nodes, arcs))
     print "Going to begin writing %d nodes and %d arcs" % (num_nodes, arcs)
-    nodes = sorted(graph.keys())
+    nodes = sorted(nodes)
     for i, node in enumerate(nodes):
         if demand.get(node, 0):
-            filelike.write('n %d %d' % (i, demand[node]))
-        if not (i+1) % 1000:
-            print "Wrote 1000 nodes"
+            filelike.write('n %d %d\n' % (i + 1, demand[node]))
 
-    e = 0
+    order = {node: i + 1 for  i, node in enumerate(nodes)}
     for i, node in enumerate(nodes):
-        for target, cost, _ in graph[node]:
-            try:
-                j = nodes.index(target)
-            except ValueError:  # FIXME: DYN IN FINAL VERSION??
-                nodes.append(target)
-                graph[node] = set()
-                j = len(nodes) - 1
-                #print "Node not in dict!"
-            filelike.write('a %d %d 0 %d %d' %
-                           (i,
+        for target, cost, _ in graph.get(node, []):
+            j = order[target]
+            filelike.write('a %d %d 0 %d %d\n' %
+                           (i + 1,
                             j,
-                            capacity.get((node, target), -1),
+                            capacity.get((node, target), 100000),
                             cost))
-            e += 1
-        if not e % 1000:
-            print "Wrote 1000 edges"
-    return dict(enumerate(nodes))
+
+    return {i + 1: n for i, n in enumerate(nodes)}
 
 def flow_to_csv(flow, filename):
     """
@@ -298,21 +305,11 @@ def flow_to_csv(flow, filename):
                              for n2 in nodes))
             f.write('\n')
 
-class TimeStamp(datetime.datetime):
-
-    @staticmethod
-    def to_str(stamp):
-        return stamp.strftime("%H:%M:%S")
-
-    @staticmethod
-    def from_str(string):
-        h = int(string[:2])
-        h = h % 24
-        string = format(h, '0>2d') + string[2:]
-        return TimeStamp.strptime(string, "%H:%M:%S")
-
-sqlite3.register_adapter(TimeStamp, TimeStamp.to_str)
-sqlite3.register_converter("TimeStamp", TimeStamp.from_str)
+def get_delta_mins(t1, t2):
+    """Return (t2 - t1) in minutes of two timestamps with format HH:MM:SS."""
+    h1, m1, s1 = map(int, t1.split(':'))
+    h2, m2, s2 = map(int, t2.split(':'))
+    return int(60 * (h2 - h1) + m2 - m1 + (s2 - s1) / 60.0)
 
 if __name__ == "__main__":
     main()
