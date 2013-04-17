@@ -12,7 +12,8 @@ GLPK = ctypes.CDLL(PATH_TO_SO)
 
 class VertexData(ctypes.Structure):
     _fields_ = [("rhs", ctypes.c_double),
-                ("pi", ctypes.c_double)]
+                ("pi", ctypes.c_double),
+                ('v_num', ctypes.c_int)]
 
 class ArcData(ctypes.Structure):
     _fields_ = [("low", ctypes.c_double),
@@ -76,12 +77,6 @@ class Graph(object):
         nodep = self.graphp[0].v[nx]
         data = self.node_data(nodep)
         data.rhs = value
-#        val = ctypes.c_double(value)
-#        ctypes.memmove(
-#            ctypes.cast(ctypes.c_char_p, nodep.value.data) +
-#                           self._vdata.rhs.offset,
-#            ctypes.byref(val),
-#            ctypes.sizeof(ctypes.c_double))
 
     def set_edge_properties(self, edge, low=None, cap=None, cost=None):
         """Set the data properties for an edge."""
@@ -101,12 +96,6 @@ class Graph(object):
             data.cap = cap
         if cost:
             data.cost = cost
-#        if (a_low >= 0)
-#            memcpy((char *)a->data + a_low, &low, sizeof(double));
-#        if (a_cap >= 0)
-#            memcpy((char *)a->data + a_cap, &cap, sizeof(double));
-#        if (a_cost >= 0)
-#            memcpy((char *)a->data + a_cost, &cost, sizeof(double))
 
     def mincost_okalg(self):
         """Run the mincost algorithm."""
@@ -165,12 +154,68 @@ class Graph(object):
     def node_data(self, node_pointer):
         """Return the vdata struct associated with the node data."""
         data = node_pointer[0].data
-        return ctypes.cast(data, ctypes.POINTER(self._vdata))
+        return ctypes.cast(data, ctypes.POINTER(self._vdata))[0]
 
     def edge_data(self, edge_pointer):
         """Return the adata struct associated with the edge data."""
         data = edge_pointer[0].data
         return ctypes.cast(data, ctypes.POINTER(self._adata))[0]
+
+    def write_graph(self, filename):
+        """
+        Write the graph to file.
+
+        The file created by the routine glp_write_graph is a plain text file,
+        which contains the following information:
+
+        nv na
+        i[1] j[1]
+        i[2] j[2]
+        . . .
+        i[na] j[na]
+
+        where: nv is the number of vertices (nodes); na is the number of
+        arcs; i[k], k = 1, . . . , na, is the index of tail vertex of arc k;
+        j[k], k = 1, . . . , na, is the index of head vertex of arc k.
+
+        """
+        if GLPK.glp_write_graph(self.graphp, filename):
+            raise IOError()
+
+    def weak_comp(self):
+        """Calculate the number of weakly connected components."""
+        n = GLPK.glp_weak_comp(self.graphp, self._vdata.v_num.offset)
+        comps = self._extract_v_num()
+        res = [[] for i in xrange(n)]
+        for i, g in comps.items():
+            res[g-1].append(i)
+        return n, res
+
+    def strong_comp(self):
+        """Calculate the number of strongly connected components."""
+        n = GLPK.glp_strong_comp(self.graphp, self._vdata.v_num.offset)
+        comps = self._extract_v_num()
+        res = [[] for i in xrange(n)]
+        for i, g in comps.items():
+            res[g-1].append(i)
+        return n, res
+
+    def topological_sort(self):
+        """
+        Calculate a topological sorting of the vertices.
+
+        Raises value error if there are any cycles in the graph.
+        """
+        n = GLPK.glp_top_sort(self.graphp, self._vdata.v_num.offset)
+        if n:
+            raise ValueError("Graph has cycles so can't sort!")
+        return self._extract_v_num()
+
+    def _extract_v_num(self):
+        """Get a dictionary of {node-index: v_num}."""
+        return {node_p[0].i: self.node_data(node_p).v_num
+                for node_p in self.iter_nodes()}
+
 
 
 def is_null_p(pt):
