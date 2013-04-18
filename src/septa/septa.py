@@ -7,9 +7,9 @@ import pyglpk
 LINK_DB = "final.db"           # Path to database
 TABLE_NAME = "links"           # Name of link table in database
 DEMAND_FILE = "demand.csv"     # Path to demand CSV
-OUTPUT = "septa-results.csv"   # Where to output results
+OUTPUT = "results.csv"         # Where to output results
 OVERFLOW = 60 * 24             # Cost of overflow links (0 for infinity)
-GAMETIME = 19 * 60 + 5
+GAMETIME = 19 * 60 + 5         # In minutes since midnigth
 
 STADIUM_NODE = 0
 STADIUM_STOPS = {
