@@ -17,7 +17,7 @@ def main():
     matcher = make_matcher(ZIPCODES)
     print "Made matcher"
     #import pdb; pdb.set_trace()
-    matcher.visualize(5000, 5000)
+    #matcher.visualize(5000, 5000)
     set_station_zips(matcher)
 
 def make_matcher(zipcodefile):
@@ -28,39 +28,6 @@ def make_matcher(zipcodefile):
         if int(zipcode) > 19154 or int(zipcode) < 19100:
             matcher.remove_container(zipcode)
     return matcher
-
-class GoogleMatcher(object):
-
-    def get_match(self, latitude, longitude):
-        """Get the zipcode of a (latitude, longitude) pair using Google Maps."""
-        base = ("http://maps.googleapis.com/maps/api/geocode/json?"
-                "latlng=%s,%s&sensor=false")
-        final_url = base % (latitude, longitude)
-        url = urllib2.urlopen(final_url)
-        resp = json.loads(url.read())
-        try:
-            comps = resp['results'][0]['address_components']
-        except KeyError:
-            if resp['status'] == 'ZERO_RESULTS':
-                raise ValueError('ZERO_RESULTS for (%s,%s)' % (latitude,
-                                                               longitude))
-            elif resp['status'] == 'NOT_FOUND':
-                raise ValueError('(%s,%s) NOT_FOUND' % (latitude,
-                                                        longitude))
-            else:
-                print resp
-                raise
-        except IndexError:
-            if resp['status'] == 'OVER_QUERY_LIMIT':
-                print "Sleeping"
-                time.sleep(1)
-                return self.get_match(latitude, longitude)
-        except Exception:
-            print resp
-            raise
-        for comp in comps:
-            if 'postal_code' in comp['types']:
-                return comp['short_name'].encode('utf-8')
 
 def set_station_zips(matcher):
     """
@@ -94,6 +61,40 @@ def set_station_zips(matcher):
     if i:
         connection.commit()
         print "Committed %d transactions" % i
+
+
+class GoogleMatcher(object):
+
+    def get_match(self, latitude, longitude):
+        """Get the zipcode of a (latitude, longitude) pair using Google Maps."""
+        base = ("http://maps.googleapis.com/maps/api/geocode/json?"
+                "latlng=%s,%s&sensor=false")
+        final_url = base % (latitude, longitude)
+        url = urllib2.urlopen(final_url)
+        resp = json.loads(url.read())
+        try:
+            comps = resp['results'][0]['address_components']
+        except KeyError:
+            if resp['status'] == 'ZERO_RESULTS':
+                raise ValueError('ZERO_RESULTS for (%s,%s)' % (latitude,
+                                                               longitude))
+            elif resp['status'] == 'NOT_FOUND':
+                raise ValueError('(%s,%s) NOT_FOUND' % (latitude,
+                                                        longitude))
+            else:
+                print resp
+                raise
+        except IndexError:
+            if resp['status'] == 'OVER_QUERY_LIMIT':
+                print "Sleeping"
+                time.sleep(1)
+                return self.get_match(latitude, longitude)
+        except Exception:
+            print resp
+            raise
+        for comp in comps:
+            if 'postal_code' in comp['types']:
+                return comp['short_name'].encode('utf-8')
 
 
 class Matcher(object):
