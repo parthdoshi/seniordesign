@@ -1,4 +1,6 @@
 
+from __future__ import division
+
 import networkx as nx
 import csv
 import bisect
@@ -6,45 +8,22 @@ import collections
 import random
 import logging
 
+
+GRAPH_FILE = 'graph-full.csv'
+LOT_FILE = 'lot-data.txt'
+CAR_LENGTH = 1   # FIXME: need to get car length in graph units
 OUTPUT_FILE = 'cars.output'
-CAR_LENGTH = 1
 TOTAL_CARS = 25000
 
-def guido_to_nx(graph):
-    """
-    Convert a simple python graph into a networkx Digraph.
-
-    :param graph: a mapping of the form ``node: [(target, capacity)]``,
-                  where ``(node, target)`` is an edge in the graph with
-                  capacity ``capacity``.
-    :returns: :class:`networkx.Digraph`
-    """
-    G = nx.Digraph()
-    for node in graph:
-        for tgt, cap in graph[node]:
-            G.add_edge(node, tgt, capacity=cap)
-    return G
-
-def weighted_choice(choices):
-    """
-    Select an element from a finite discrete distribution.
-
-    :param choices: An iterable of ``(element, weight)`` pairs.
-
-    Note---weights are automatically normalized.
-
-    Taken from http://stackoverflow.com/a/4322940
-
-    """
-    values, weights = zip(*choices)
-    total = 0
-    cum_weights = []
-    for w in weights:
-        total += w
-        cum_weights.append(total)
-    x = random.random() * total
-    i = bisect.bisect(cum_weights, x)
-    return values[i]
+def main():
+    # There's an if __name__ == "__main__": main() at the bottom
+    logging.basicConfig(filename=OUTPUT_FILE, level=logging.INFO)
+    sim = Simulation.from_file(GRAPH_FILE,
+                               LOT_FILE,
+                               CAR_LENGTH,
+                               logging,
+                               TOTAL_CARS)
+    sim.run(logging)
 
 class Simulation(object):
 
@@ -89,8 +68,6 @@ class Simulation(object):
         self.exits = []
         self.time = 0
         self.path = {}
-        logging.basicConfig(filename=OUTPUT_FILE, level=logging.INFO)
-        self.logger = logging
 
     @property
     def in_system(self):
@@ -140,54 +117,85 @@ class Simulation(object):
         paths.pop(self.exit_node)
         self.path = {n: p[-2] for n, p in paths.items()}
 
-    def log_traffic(self):
+    def log_traffic(self, logger):
         for n1, n2, d in self.graph.edges_iter(data=True):
-            self.logger.info("Time: %f, Edge: (%s,%s), Cars: %d",
-                             self.time, n1, n2, len(d['queue']))
+            logger.info("Time: %f, Edge: (%s,%s), Cars: %d",
+                        self.time, n1, n2, len(d['queue']))
 
-    def run(self):
+    def run(self, logger):
         while self.in_system:
-            self.log_traffic()
+            self.log_traffic(logger)
             self.update_weights()
             self.calc_path()
             self.next_event()
 
     @classmethod
-    def from_file(cls, filename, source_filename):
+    def from_file(cls, graph_filename, source_filename, car_length, logger,
+                  total_cars):
+        """
+        Create a Simulation object from two source files.
+
+        :param graph_filename: location of the graph file, which should be a
+                               csv file where the top row lists the head
+                               nodes and the first column lists the tail
+                               nodes of the incidence matrix.
+        :param source_filename: location of the parking lot file, whose
+                                format is described in :class:`SourceLoader`
+
+        :returns: a :class:`Simulator` object with the loaded data.
+        """
         lengths = {}
-        with open(filename, 'rb') as csvfile:
+        with open(graph_filename, 'rb') as csvfile:
             reader = csv.reader(csvfile)
             header = next(reader)[1:]
             for line in reader:
                 node = line[0]
-                body = [float(length) / CAR_LENGTH for length in line[1:]]
-                lengths[node] = {h: l
-                                 for h, l in zip(header, body) if l >= 0}
+                body = [float(length) / car_length for length in line[1:]]
+                lengths[node] = {h: b
+                                 for h, b in zip(header, body) if b >= 0}
         graph = guido_to_nx(lengths)
-        sl = SourceLoader(open(source_filename))
-        sources = sl.get_sources(TOTAL_CARS)
-        return cls(graph, sources)
+        sl = SourceLoader(open(source_filename), car_length)
+        sources = sl.get_sources(total_cars)
+        return cls(graph, sources, logger)
 
 
 class SourceLoader(object):
 
-    SIGMA_FACTOR = .1
-    PEDESTRIAN_SPEED = .296  # 20 min/mile =>  v = .296 * (4.5m/s), where
-                             # 4.5 is a car length # FIXME
+    """
+    A helper to load the parking lot demands.
 
-    def __init__(self, source_file):
+    It reads in a file containing polygon information for each lot and a
+    one-line header with the coordinates of the origin.
+    Each line should be a valid python expression.
+    I.e.:
+
+        (x_o, y_o)
+        [(x_00, y_00), (x_01, y_01), ... (x_0n0, y_0n0)]
+        [(x_10, y_10), (x_11, y_11), ... (x_1n1, y_1n1)]
+        ...
+        [(x_m0, y_m0), (x_m1, y_m1), ... (x_mn1, y_mn1)]
+
+    """
+
+    SIGMA_FACTOR = .1
+
+    def __init__(self, source_file, car_length):
         sources = map(eval, source_file.read().strip().split('\n'))
         self.origin = sources[0]
         self.sources = sources[1:]
+        self.pedestrian_speed = .296 * car_length
+          # 20 min/mile =>  v = .296 * (4.5m/s)
+          #                   = .296 * car_length / s
 
     def get_sources(self, total):
-        """Gets the per-source total demand."""
+        """Gets the per-source demand."""
         centroids = map(self.get_centroid, self.sources)
         distances = map(self.get_distance, centroids)
-        factors = [self.calc_polygon_area(s) / d ** 2
-                   for d, s in zip(distances, self.sources)]
+        areas = map(self.calc_polygon_area, self.sources)
+        factors = [a / d ** 2
+                   for a, d in zip(areas, distances)]
         scale = total / sum(factors)
-        times = [d / self.PEDESTRIAN_SPEED for d in distances]
+        times = [d / self.pedestrian_speed for d in distances]
         return {c: (t, self.SIGMA_FACTOR * t, f * scale)
                 for c, t, f in zip(centroids, times, factors)}
 
@@ -221,3 +229,42 @@ class SourceLoader(object):
         x = sum(zip(*polygon)[0]) / len(polygon)
         y = sum(zip(*polygon)[1]) / len(polygon)
         return x, y
+
+def guido_to_nx(graph):
+    """
+    Convert a simple python graph into a networkx Digraph.
+
+    :param graph: a mapping of the form ``node: [(target, capacity)]``,
+                  where ``(node, target)`` is an edge in the graph with
+                  capacity ``capacity``.
+    :returns: :class:`networkx.Digraph`
+    """
+    G = nx.Digraph()
+    for node in graph:
+        for tgt, cap in graph[node]:
+            G.add_edge(node, tgt, capacity=cap)
+    return G
+
+def weighted_choice(choices):
+    """
+    Select an element from a finite discrete distribution.
+
+    :param choices: An iterable of ``(element, weight)`` pairs.
+
+    Note---weights are automatically normalized.
+
+    Taken from http://stackoverflow.com/a/4322940
+
+    """
+    values, weights = zip(*choices)
+    total = 0
+    cum_weights = []
+    for w in weights:
+        total += w
+        cum_weights.append(total)
+    x = random.random() * total
+    i = bisect.bisect(cum_weights, x)
+    return values[i]
+
+if __name__ ==  "__main__":
+    main()
