@@ -74,6 +74,14 @@ class Graph(object):
     def set_demand(self, nx, value):
         """Set the demand for a node given its index."""
         self.assert_has_node(nx)
+        self._set_demand_unsafe(nx, value)
+
+    def _set_demand_unsafe(self, nx, value):
+        """
+        Set the demand for a node without checking bounds.
+
+        Can cause a segmentation fault!
+        """
         nodep = self.graphp[0].v[nx]
         data = self.node_data(nodep)
         data.rhs = value
@@ -82,6 +90,14 @@ class Graph(object):
         """Set the data properties for an edge."""
         self.assert_has_node(edge[0])
         self.assert_has_node(edge[1])
+        self._set_edge_properties_unsafe(low, cap, cost)
+
+    def _set_edge_properties_unsafe(self, edge, low=None, cap=None, cost=None):
+        """
+        Set the edge properties without checking node bounds.
+
+        Can cause a segmentation fault!
+        """
         np1 = self.graphp[0].v[edge[0]]
         for edgep in self.get_out_edges(np1[0]):
             if edge[1] == edgep[0].head[0].i:

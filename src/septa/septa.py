@@ -8,7 +8,8 @@ LINK_DB = "final.db"           # Path to database
 TABLE_NAME = "links"           # Name of link table in database
 DEMAND_FILE = "demand.csv"     # Path to demand CSV
 OUTPUT = "septa-results.csv"   # Where to output results
-OVERFLOW = 0                   # Cost of overflow links (0 for infinity)
+OVERFLOW = 60 * 24             # Cost of overflow links (0 for infinity)
+GAMETIME = 19 * 60 + 5
 
 STADIUM_NODE = 0
 STADIUM_STOPS = {
@@ -22,7 +23,6 @@ STADIUM_STOPS = {
     152: 6,     # Broad St & Hartranft St
     28169: 6,   # Pattison Av & 7th St
     }
-GAMETIME = 16 * 60
 
 def main():
     # There's an if __name__ == "__main__": main() at the bottom
@@ -143,7 +143,7 @@ def run_ook(graph, demand, capacity):
                                      low=0,
                                      cap=capacity.get((node, target), 90000),
                                      cost=cost)
-    w = glpk.weak_comp()
+    w = glpk.weak_comp()[0]
     print "Made GLPK graph object with %d weak components" % w
     if w > 1:
         raise ValueError("The graph is not weakly connected!")
