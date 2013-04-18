@@ -29,7 +29,23 @@ def main():
     main_sim(GAMETIME, LINK_DB, OUTPUT)
 
 def main_sim(gametime, dbfilename, outfilename):
+    global TABLE_NAME
     print "Starting"
+    c = sqlite3.connect(dbfilename)
+    curs = c.cursor()
+    curs.executescript ("""
+    DROP TABLE IF EXISTS {0}_temp;
+    CREATE TABLE {0}_temp AS SELECT * from {0}
+      WHERE departure>"{1}" AND departure<"{2}";
+    CREATE INDEX dest_arr_ix_t on {0}_temp (dest, arrival);
+    CREATE INDEX orig_dep_ix_t on {0}_temp (origin, departure);
+    """.format(TABLE_NAME,
+               GraphMaker.minutes_to_str(GAMETIME - 200),
+               GraphMaker.minutes_to_str(GAMETIME + 200))
+        )
+    c.close()
+    print "Created reduced table"
+    TABLE_NAME = TABLE_NAME + "_temp"
     graph = make_guido_graph(dbfilename)
     print "Made the python graph."
     capacity = get_capacity()
@@ -47,7 +63,7 @@ def get_capacity():
             LINK_DB,
             detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
     cursor = connection.cursor()
-    cursor.execute('SELECT origin, departure, dest, arrival, capacity ' +
+    cursor.execute('SELECT origin, departure, dest, arrival, capacity, ' +
                    'baseline ' +
                    'FROM %s;' % TABLE_NAME)
     capacity = {}
@@ -136,7 +152,7 @@ def run_ook(graph, demand, capacity):
     print "Set the node demands; in, out = %d, %d" % (total_demand_in, total_demand_out)
     assert total_demand_in == total_demand_out
     for node, i in alias.items():
-        for target, cost in graph[node].items():
+        for target, cost in graph.get(node, {}).items():  # FIXME, KLUDGE
             j = alias[target]
             assert cost >= 0
             glpk.add_edge(i, j)
@@ -275,12 +291,15 @@ class GraphMaker(object):
     def load_edges(self):
         """Populate the three dicts with edges."""
         # First the stadium-stadium edges
+        e = 0
         nodes = sorted(self.stadium_nodes.keys())
         for n1, n2 in zip(nodes, nodes[1:]):
             t = self.get_delta_mins(n2[1], n1[1])
             self.stadium_nodes[n1][n2] = t
-        print "Loaded stadium-stadium edges"
+            e += 1
+        print "Loaded stadium-stadium edges: count = %d" % e
         # now the zipcode-septa edges
+        e = 0
         for zipcode, tgs in self.zip_nodes.items():
             self.execute('SELECT origin, departure '
                          'FROM %s ' % self.table +
@@ -288,9 +307,12 @@ class GraphMaker(object):
                          'ON origin=stop_id '
                          'WHERE stops.zipcode=?;',
                          (zipcode,))
-            tgs.update({(o, d): 0 for o, d in self.fetchall()})
-        print "Loaded zipcode-SEPTA edges"
+            rows = self.fetchall()
+            tgs.update({(o, d): 0 for o, d in rows})
+            e += len(rows)
+        print "Loaded zipcode-SEPTA edges: count = %d" % e
         # now the SEPTA-SEPTA and SEPTA-Stadium edges
+        e = 0
         nodes = sorted(self.septa_nodes.keys())
         for i, node in enumerate(nodes):
             self.execute('SELECT dest, arrival, duration ' +
@@ -303,6 +325,7 @@ class GraphMaker(object):
                 continue
             dapairs = map(tuple, zip(dests, arrs))
             self.septa_nodes[node].update(zip(dapairs, costs))
+            e += len(dapairs)
 
             try:  # This entire block is for the waiting links
                 next_stop, time = nodes[i+1]
@@ -312,19 +335,23 @@ class GraphMaker(object):
                 if next_stop == node[0]:
                     cost = self.get_delta_mins(time, node[1])
                     self.septa_nodes[node][nodes[i+1]] =  cost
+                    e += 1
 
             if node[0] in STADIUM_STOPS:  # This block is for SEPTA-Stadium
                 cost = STADIUM_STOPS[node[0]]
                 time = self.minutes_to_str(self.get_delta_mins(node[1]) +
                                            cost)
                 self.septa_nodes[node][(STADIUM_NODE, time)] = cost
-        print "Loaded SEPTA-SEPTA and SEPTA-Stadium edges"
+                e += 1
+        print "Loaded SEPTA-SEPTA and SEPTA-Stadium edges: count = %d" % e
         # finally, the zipcode-stadium edges
         if self.overflow:
+            e = 0
             first_stadium = min(self.stadium_nodes.keys())
             for tgts in self.zip_nodes.values():
                 tgts[first_stadium] = self.overflow
-            print "Loaded overflow edges"
+                e += 1
+            print "Loaded overflow edges: count = %d" % e
 
     @staticmethod
     def get_delta_mins(t2, t1="00:00:00"):

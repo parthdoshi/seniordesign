@@ -90,7 +90,7 @@ class Graph(object):
         """Set the data properties for an edge."""
         self.assert_has_node(edge[0])
         self.assert_has_node(edge[1])
-        self._set_edge_properties_unsafe(low, cap, cost)
+        self._set_edge_properties_unsafe(edge, low, cap, cost)
 
     def _set_edge_properties_unsafe(self, edge, low=None, cap=None, cost=None):
         """
