@@ -48,13 +48,14 @@ def get_capacity():
             detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
     cursor = connection.cursor()
     cursor.execute('SELECT origin, departure, dest, arrival, capacity ' +
+                   'baseline ' +
                    'FROM %s;' % TABLE_NAME)
     capacity = {}
-    for orig, dep, dest, arr, cap in cursor.fetchall():
+    for orig, dep, dest, arr, cap, bl in cursor.fetchall():
         try:
-            capacity[(orig, dep)][(dest, arr)] = cap
+            capacity[(orig, dep)][(dest, arr)] = cap - bl
         except KeyError:
-            capacity[(orig, dep)] = {(dest, arr): cap}
+            capacity[(orig, dep)] = {(dest, arr): cap - bl}
     return capacity
 
 def get_demand(gametime):
@@ -256,9 +257,11 @@ class GraphMaker(object):
             time = self.minutes_to_str(self.get_delta_mins(arrival) +
                                        STADIUM_STOPS[dest])
             self.stadium_nodes[(STADIUM_NODE, time)] = {}
+        print "Loaded stadium nodes: count = %d" % len(self.stadium_nodes)
         # Now the zipcode nodes -- each node is a **string**
         self.execute('SELECT DISTINCT zipcode FROM stops')
         self.zip_nodes = {r[0]: {} for r in self.fetchall()}
+        print "Loaded zipcode nodes: count = %d" % len(self.zip_nodes)
         # Finally the SEPTA nodes
         self.execute('SELECT DISTINCT origin, departure '
                      'FROM %s' % self.table)
@@ -267,6 +270,7 @@ class GraphMaker(object):
                      'FROM %s' % self.table)
         nodes.extend(map(tuple, self.fetchall()))
         self.septa_nodes = {n: {} for n in nodes}
+        print "Loaded SEPTA nodes: count = %d" % len(self.septa_nodes)
 
     def load_edges(self):
         """Populate the three dicts with edges."""
@@ -275,6 +279,7 @@ class GraphMaker(object):
         for n1, n2 in zip(nodes, nodes[1:]):
             t = self.get_delta_mins(n2[1], n1[1])
             self.stadium_nodes[n1][n2] = t
+        print "Loaded stadium-stadium edges"
         # now the zipcode-septa edges
         for zipcode, tgs in self.zip_nodes.items():
             self.execute('SELECT origin, departure '
@@ -284,6 +289,7 @@ class GraphMaker(object):
                          'WHERE stops.zipcode=?;',
                          (zipcode,))
             tgs.update({(o, d): 0 for o, d in self.fetchall()})
+        print "Loaded zipcode-SEPTA edges"
         # now the SEPTA-SEPTA and SEPTA-Stadium edges
         nodes = sorted(self.septa_nodes.keys())
         for i, node in enumerate(nodes):
@@ -312,11 +318,13 @@ class GraphMaker(object):
                 time = self.minutes_to_str(self.get_delta_mins(node[1]) +
                                            cost)
                 self.septa_nodes[node][(STADIUM_NODE, time)] = cost
+        print "Loaded SEPTA-SEPTA and SEPTA-Stadium edges"
         # finally, the zipcode-stadium edges
         if self.overflow:
             first_stadium = min(self.stadium_nodes.keys())
             for tgts in self.zip_nodes.values():
                 tgts[first_stadium] = self.overflow
+            print "Loaded overflow edges"
 
     @staticmethod
     def get_delta_mins(t2, t1="00:00:00"):
