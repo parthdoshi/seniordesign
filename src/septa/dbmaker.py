@@ -11,48 +11,70 @@ def get_str(mins):
     m = mins % 60
     return "%02d:%02d:00" % (h, m)
 
+TOTAL_RIDERSHIP = 31000000
+
+PER_BLOCK = [
+    ("00:00:00", 0),
+    ("06:00:00", .035 * TOTAL_RIDERSHIP),
+    ("09:00:00", .215 * TOTAL_RIDERSHIP),
+    ("12:00:00", .155 * TOTAL_RIDERSHIP),
+    ("15:00:00", .18 * TOTAL_RIDERSHIP),
+    ("18:00:00", .26 * TOTAL_RIDERSHIP),
+    ("21:00:00", .105 * TOTAL_RIDERSHIP),
+    ("24:00:00", .055 * TOTAL_RIDERSHIP)
+    ]
+
 c = sqlite3.connect('final.db')
 c.create_function('mins', 1, get_min)
 s = c.cursor()
 
-print "made db"
-s.execute('SELECT route_id, short_name FROM routes')
-names = dict(s.fetchall())
-print "made name dict"
-s.execute('SELECT short_name, total FROM capacity')
-capacity = dict(s.fetchall())
-print "made capacity dict"
+BASELINE_PCT = {}
 
-#time,baseline
-baseline = dict(l.strip().split(',') for l in open('times.csv'))
-print "made baseline dict1"
-b2 = {b: 0 for b in baseline.keys()}
+for (t1, p1), (t2, p2) in zip(PER_BLOCK, PER_BLOCK[1:]):
+    s.execute('SELECT sum(duration * capacity) '
+              'FROM links '
+              'WHERE departure>? and arrival<?',
+              (t1, t2))
+    pass_mins = s.fetchone()[0]
+    s.execute('SELECT departure, duration, capacity '
+              'FROM links '
+              'WHERE departure < ? AND arrival BETWEEN ? AND ?',
+              (t1, t1, t2))
+    cutoff = get_min(t1)
+    pass_mins += sum((get_min(dep) - cutoff) * du * ca
+                     for dep, du, ca in s.fetchall())
+    s.execute('SELECT departure, duration, capacity '
+              'FROM links '
+              'WHERE departure BETWEEN ? AND ? AND arrival >?',
+              (t1, t2, t2))
+    cutoff = get_min(t2)
+    pass_mins += sum((cutoff - get_min(dep)) * du * ca
+                     for dep, du, ca in s.fetchall())
+    BASELINE_PCT[get_min(t1) / 180] = p2 / pass_mins
+    print "made block %s - %s" % (t1, t2)
 
-for i in xrange(60 * 24):
-    string = get_str(i)
-    s.execute('SELECT count(departure) from links where departure<? and '
-              'arrival>=?',
-              (string, string))
-    count = int(s.fetchone()[0])
+print "made per block map"
+
+BASELINE_PCT[1] = BASELINE_PCT[0]
+
+def get_pct(start, end):
+    t1 = get_min(start) / 180
+    t2 = get_min(end) / 180
+    p1 = BASELINE_PCT[int(t1) % 8]
+    p2 = BASELINE_PCT[int(t2) % 8]
     try:
-        b = int(baseline[string]) / count
+        return ((t2 - int(t2)) * p2 + (int(t2) - t1) * p1) / (t2 - t1)
     except ZeroDivisionError:
-        print string + " got ZeroDivisionError"
-    else:
-        b2[string] += b
-        print string + " worked"
-print "made baseline dict2"
+        return p1
 
 # origin, dest, departure, arrival, route_id, duration, capacity, baseline
 s.execute('SELECT * from links')
 output = []
-with open('links.csv', 'wt') as f:
-    for line in s.fetchall():
-        line = list(line)
-        line[6] = capacity[names[line[4]]]
-        start = get_min(line[2])
-        line[7] = int(sum(b2[get_str(i + start)] for i in xrange(line[5])))
-        output.append(','.join(map(str, line)))
+for line in s.fetchall():
+    line = list(line)
+    start = get_min(line[2])
+    line[7] = int(get_pct(line[2], line[3]) * line[6] + .5)
+    output.append(','.join(map(str, line)))
 
 open('out.csv', 'w').write('\n'.join(output))
 print "wrote out.csv"
