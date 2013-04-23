@@ -201,7 +201,6 @@ class Simulation(object):
         graph = guido_to_nx(lengths)
         sl = SourceLoader(open(source_filename))
         sources = sl.get_sources(total_cars, graph.nodes())
-        print set(sources.keys()).difference(graph.nodes())
         assert set(sources.keys()).issubset(graph.nodes())
         sl.set_out(graph)
         return cls(graph, sources)
