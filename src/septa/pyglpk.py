@@ -6,6 +6,7 @@ Library to interface with glpk graph
 
 import ctypes
 import itertools
+import fovgraph
 
 PATH_TO_SO = '/usr/local/lib/libglpk.so'
 GLPK = ctypes.CDLL(PATH_TO_SO)
@@ -33,23 +34,23 @@ class Graph(object):
     def __init__(self):
         self._vdata = VertexData
         self._adata = ArcData
-        self.graphp = create_graph(ctypes.sizeof(self._vdata),
+        self.graph_ptr = create_graph(ctypes.sizeof(self._vdata),
                                    ctypes.sizeof(self._adata))
 
 
     def erase_graph(self):
         """Clear the current graph."""
-        GLPK.glp_erase_graph(self.graphp,
-                             self.graphp[0].v_size,
-                             self.graphp[0].a_size)
+        GLPK.glp_erase_graph(self.graph_ptr,
+                             self.graph_ptr[0].v_size,
+                             self.graph_ptr[0].a_size)
 
     def add_vertices(self, num):
         """Add num vertices to the graph."""
-        GLPK.glp_add_vertices(self.graphp, ctypes.c_int(num))
+        GLPK.glp_add_vertices(self.graph_ptr, ctypes.c_int(num))
 
     def has_node(self, num):
         """Check whether the graph has the given node or not."""
-        return 0 < num <= self.graphp[0].nv
+        return 0 < num <= self.graph_ptr[0].nv
 
     def assert_has_node(self, num):
         """Raise IndexError if the graph does not have the given node."""
@@ -60,20 +61,20 @@ class Graph(object):
 
     def add_edge(self, base_num, dest_num):
         """Add an edge to the graph."""
-        self.assert_has_node(base_num)
-        self.assert_has_node(dest_num)
-        GLPK.glp_add_arc(self.graphp,
+        self.assert_has_node(base_num)  # Prevent errors from glpapi15.c
+        self.assert_has_node(dest_num)  # at lines 250/253
+        GLPK.glp_add_arc(self.graph_ptr,
                          ctypes.c_int(base_num),
                          ctypes.c_int(dest_num))
 
     def clear_demand(self):
         """Set all node demand to 0."""
-        for nodep in self.iter_nodes():
+        for nodep in self.iter_node_pts():
             self.set_demand(nodep, 0)
 
     def set_demand(self, nx, value):
         """Set the demand for a node given its index."""
-        self.assert_has_node(nx)
+        self.assert_has_node(nx)  # Necessary to prevent seg fault!
         self._set_demand_unsafe(nx, value)
 
     def _set_demand_unsafe(self, nx, value):
@@ -82,7 +83,7 @@ class Graph(object):
 
         Can cause a segmentation fault!
         """
-        nodep = self.graphp[0].v[nx]
+        nodep = self.graph_ptr[0].v[nx]  # --> Potential segfault!
         data = self.node_data(nodep)
         data.rhs = value
 
@@ -98,7 +99,7 @@ class Graph(object):
 
         Can cause a segmentation fault!
         """
-        np1 = self.graphp[0].v[edge[0]]
+        np1 = self.graph_ptr[0].v[edge[0]]
         for edgep in self.get_out_edges(np1[0]):
             if edge[1] == edgep[0].head[0].i:
                 break
@@ -114,9 +115,14 @@ class Graph(object):
             data.cost = cost
 
     def mincost_okalg(self):
-        """Run the mincost algorithm."""
+        """
+        Run the mincost algorithm.
+
+        This code has been adapted from the C version found in the GLPK
+        manual.
+        """
         sol = ctypes.c_double(0)
-        ret = GLPK.glp_mincost_okalg(self.graphp,
+        ret = GLPK.glp_mincost_okalg(self.graph_ptr,
                                      self._vdata.rhs.offset,
                                      self._adata.low.offset,
                                      self._adata.cap.offset,
@@ -135,7 +141,7 @@ class Graph(object):
             raise RuntimeError("Mincost failed with code %d: %s" %
                                (ret, retcodes[ret]))
         flowvec = {}
-        for edge_pt in self.iter_edges():
+        for edge_pt in self.iter_edge_pts():
             i = edge_pt[0].tail[0].i
             j = edge_pt[0].head[0].i
             flow = self.edge_data(edge_pt).x
@@ -147,14 +153,22 @@ class Graph(object):
         return flowvec, sol.value
 
     def iter_nodes(self):
-        """Iterate over all the node pointers in the graph."""
-        return (self.graphp[0].v[i + 1]
-                for i in xrange(self.graphp[0].nv))
+        """Iterate over all the nodes in the graph."""
+        return (v.contents for v in self.iter_node_pts())
 
     def iter_edges(self):
+        """Iterate over all the edges in the graph."""
+        return (e.contents for e in self.iter_edge_pts())
+
+    def iter_node_pts(self):
+        """Iterate over all the node pointers in the graph."""
+        return (self.graph_ptr[0].v[i + 1]
+                for i in xrange(self.graph_ptr[0].nv))
+
+    def iter_edge_pts(self):
         """Iterate over all the edge pointers in the graph."""
         return itertools.chain(*(self.get_out_edges(node[0])
-                                 for node in self.iter_nodes()))
+                                 for node in self.iter_node_pts()))
 
     def get_out_edges(self, node):
         """Iterate over the outgoing edges from node."""
@@ -195,12 +209,12 @@ class Graph(object):
         j[k], k = 1, . . . , na, is the index of head vertex of arc k.
 
         """
-        if GLPK.glp_write_graph(self.graphp, filename):
+        if GLPK.glp_write_graph(self.graph_ptr, filename):
             raise IOError()
 
     def weak_comp(self):
         """Calculate the number of weakly connected components."""
-        n = GLPK.glp_weak_comp(self.graphp, self._vdata.v_num.offset)
+        n = GLPK.glp_weak_comp(self.graph_ptr, self._vdata.v_num.offset)
         comps = self._extract_v_num()
         res = [[] for i in xrange(n)]
         for i, g in comps.items():
@@ -209,7 +223,7 @@ class Graph(object):
 
     def strong_comp(self):
         """Calculate the number of strongly connected components."""
-        n = GLPK.glp_strong_comp(self.graphp, self._vdata.v_num.offset)
+        n = GLPK.glp_strong_comp(self.graph_ptr, self._vdata.v_num.offset)
         comps = self._extract_v_num()
         res = [[] for i in xrange(n)]
         for i, g in comps.items():
@@ -222,7 +236,7 @@ class Graph(object):
 
         Raises value error if there are any cycles in the graph.
         """
-        n = GLPK.glp_top_sort(self.graphp, self._vdata.v_num.offset)
+        n = GLPK.glp_top_sort(self.graph_ptr, self._vdata.v_num.offset)
         if n:
             raise ValueError("Graph has cycles so can't sort!")
         return self._extract_v_num()
@@ -230,7 +244,7 @@ class Graph(object):
     def _extract_v_num(self):
         """Get a dictionary of {node-index: v_num}."""
         return {node_p[0].i: self.node_data(node_p).v_num
-                for node_p in self.iter_nodes()}
+                for node_p in self.iter_node_pts()}
 
 
 
