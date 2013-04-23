@@ -17,8 +17,15 @@ def main():
     flows = load_flows(RESULTS_FILE)
     zips = [n for n in flows if isinstance(n, int)]
     nxg, dest = guido_to_nx(flows)
-    print ("%d weakly connected components" %
-           nx.number_weakly_connected_components(nxg))
+    comps = nx.weakly_connected_components(nxg)
+    comps.sort(key=len)
+    print "%d weakly connected components" % len(comps)
+    print "Sizes: " + ', '.join('%d' % len(c) for c in comps)
+    print "Comp1: {%r, %r}:" % tuple(comps[0]),
+    print flows[19145][(152, u'18:54:00')]
+    print "Comp2: {%r, %r}:" % tuple(comps[1]),
+    print flows[19114][(31487, u'18:54:00')]
+    return
     congestion = {}
     for z in zips:
         congs = []
@@ -26,7 +33,7 @@ def main():
             for path in get_paths(nxg, z, dest):
                 congs.append(get_congestion(nxg, path))
         except nx.NetworkXNoPath:
-            continue
+            raise ValueError("No path from %d to %r" % (z, dest))
         congestion[z] = sum(congs) / len(congs)
     with open(OUTPUT, 'w') as f:
         for z, c in congestion.items():
