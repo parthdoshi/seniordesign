@@ -3,6 +3,7 @@ from __future__ import division
 
 import sqlite3
 import pyglpk
+import time
 
 LINK_DB = "final.db"           # Path to database
 TABLE_NAME = "links"           # Name of link table in database
@@ -26,46 +27,47 @@ STADIUM_STOPS = {
 
 def main():
     # There's an if __name__ == "__main__": main() at the bottom
-    main_sim(GAMETIME, LINK_DB, OUTPUT)
+    main_sim(GAMETIME, LINK_DB, TABLE_NAME, OUTPUT)
 
-def main_sim(gametime, dbfilename, outfilename):
-    global TABLE_NAME
-    print "Starting"
+def main_sim(gametime, dbfilename, tablename, outfilename):
+    print "Starting %s (%f)" % (time.ctime(), time.clock())
     c = sqlite3.connect(dbfilename)
     curs = c.cursor()
     curs.executescript ("""
     DROP TABLE IF EXISTS {0}_temp;
     CREATE TABLE {0}_temp AS SELECT * from {0}
-      WHERE departure>"{1}" AND departure<"{2}";
+    WHERE departure BETWEEN "{1}" AND "{2}"
+    AND arrival BETWEEN "{1}" AND "{2}";
     CREATE INDEX dest_arr_ix_t on {0}_temp (dest, arrival);
     CREATE INDEX orig_dep_ix_t on {0}_temp (origin, departure);
-    """.format(TABLE_NAME,
-               GraphMaker.minutes_to_str(GAMETIME - 200),
-               GraphMaker.minutes_to_str(GAMETIME + 200))
+    """.format(tablename,
+               GraphMaker.minutes_to_str(GAMETIME - 240),
+               GraphMaker.minutes_to_str(GAMETIME + 240))
         )
     c.close()
-    print "Created reduced table"
-    TABLE_NAME = TABLE_NAME + "_temp"
-    graph = make_guido_graph(dbfilename)
-    print "Made the python graph."
-    capacity = get_capacity()
-    print "Loaded the network's capacity"
-    demand = get_demand(gametime)
-    print "Loaded the network's demand"
+    print "Created reduced table (%f)" % (time.clock())
+    tablename = tablename + "_temp"
+    graph = make_guido_graph(dbfilename, tablename, OVERFLOW)
+    print "Made the python graph. (%f)" % (time.clock())
+    capacity = get_capacity(dbfilename, tablename)
+    print "Loaded the network's capacity (%f)" % (time.clock())
+    demand = get_demand(DEMAND_FILE, gametime)
+    print "Loaded the network's demand (%f)" % (time.clock())
     flow = run_ook(graph, demand, capacity)
-    print "Found the optimal flow, size %d" % len(flow)
+    print "Found the optimal flow (%f), size %d" % (time.clock() ,
+                                                    len(flow))
     flow_to_csv(flow, outfilename)
-    print "Wrote the results to %s" % OUTPUT
+    print "Wrote the results to %s (%f)" % (outfilename, time.clock())
 
-def get_capacity():
+def get_capacity(dbfilename, tablename):
     """Load the capacity of each link."""
     connection = sqlite3.connect(
-            LINK_DB,
+            dbfilename,
             detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
     cursor = connection.cursor()
     cursor.execute('SELECT origin, departure, dest, arrival, capacity, ' +
                    'baseline ' +
-                   'FROM %s;' % TABLE_NAME)
+                   'FROM %s;' % tablename)
     capacity = {}
     for orig, dep, dest, arr, cap, bl in cursor.fetchall():
         try:
@@ -74,7 +76,7 @@ def get_capacity():
             capacity[(orig, dep)] = {(dest, arr): cap - bl}
     return capacity
 
-def get_demand(gametime):
+def get_demand(demandfile, gametime):
     """
     Get the time and space varying demand.
 
@@ -88,7 +90,7 @@ def get_demand(gametime):
     The output is a mapping ``{node: demand}``, where ``node`` is either of
     the form ``(id_, time)`` or ``"zipcode"``.
     """
-    csv = [l.split(',') for l in open(DEMAND_FILE).read().split('\n') if l]
+    csv = [l.split(',') for l in open(demandfile).read().split('\n') if l]
     demand = {}
     for row in csv[1:]:
         demand[row[0]] = 0
@@ -105,11 +107,11 @@ def get_demand(gametime):
                 demand[row[0]] += val
     return demand
 
-def make_guido_graph(dbfile):
+def make_guido_graph(dbfile, tablename, overflow):
     """
     Reads in the septa database and outputs a space-time graph.
     """
-    graph_maker = GraphMaker(dbfile, TABLE_NAME, OVERFLOW)
+    graph_maker = GraphMaker(dbfile, tablename, overflow)
     return graph_maker.make_graph()
 
 def run_ook(graph, demand, capacity):
@@ -136,7 +138,9 @@ def run_ook(graph, demand, capacity):
     arcs = sum(map(len, graph.values()))
     glpk = pyglpk.Graph()
     glpk.add_vertices(num_nodes)
-    print "Going to begin making %d nodes and %d arcs" % (num_nodes, arcs)
+    print "Going to begin making %d nodes and %d arcs (%f)" % (num_nodes,
+                                                               arcs,
+                                                               time.clock())
     alias = {node: i + 1 for  i, node in enumerate(nodes)}
     assert set(demand.keys()).issubset(nodes)
     total_demand_in = 0
@@ -149,19 +153,24 @@ def run_ook(graph, demand, capacity):
                 total_demand_in -= d
             else:
                 total_demand_out += d
-    print "Set the node demands; in, out = %d, %d" % (total_demand_in, total_demand_out)
+    print "Set the node demands (%f); in, out = %d, %d" % (time.clock(),
+                                                           total_demand_in,
+                                                           total_demand_out)
     assert total_demand_in == total_demand_out
     for node, i in alias.items():
-        for target, cost in graph.get(node, {}).items():  # FIXME, KLUDGE
+        for target, cost in graph[node].items():
             j = alias[target]
             assert cost >= 0
+            cap = capacity.get((node, target), 90000)
+            assert cap >= 0
             glpk.add_edge(i, j)
             glpk.set_edge_properties((i, j),
                                      low=0,
-                                     cap=capacity.get((node, target), 90000),
+                                     cap=cap,
                                      cost=cost)
     w = glpk.weak_comp()[0]
-    print "Made GLPK graph object with %d weak components" % w
+    print "Made GLPK graph object with %d weak components (%f)" % (w,
+                                                    time.clock())
     if w > 1:
         raise ValueError("The graph is not weakly connected!")
     flowdict = glpk.mincost_okalg()[0]
@@ -269,15 +278,23 @@ class GraphMaker(object):
             'SELECT dest, arrival FROM %s ' % self.table +
             'WHERE dest IN (%s)' % ','.join('?' * len(STADIUM_STOPS)),
             STADIUM_STOPS.keys())
-        for dest, arrival in self.fetchall():
-            time = self.minutes_to_str(self.get_delta_mins(arrival) +
+        res = self.fetchall()
+        self.execute(
+            'SELECT origin, departure FROM %s ' % self.table +
+            'WHERE origin IN (%s)' % ','.join('?' * len(STADIUM_STOPS)),
+            STADIUM_STOPS.keys())
+        res.extend(self.fetchall())
+        for dest, arrival in res:
+            t = self.minutes_to_str(self.get_delta_mins(arrival) +
                                        STADIUM_STOPS[dest])
-            self.stadium_nodes[(STADIUM_NODE, time)] = {}
-        print "Loaded stadium nodes: count = %d" % len(self.stadium_nodes)
+            self.stadium_nodes[(STADIUM_NODE, t)] = {}
+        print "Loaded stadium nodes: count = %d (%f)" % (
+            len(self.stadium_nodes), time.clock())
         # Now the zipcode nodes -- each node is a **string**
         self.execute('SELECT DISTINCT zipcode FROM stops')
         self.zip_nodes = {r[0]: {} for r in self.fetchall()}
-        print "Loaded zipcode nodes: count = %d" % len(self.zip_nodes)
+        print "Loaded zipcode nodes: count = %d (%f)" % (
+            len(self.zip_nodes), time.clock())
         # Finally the SEPTA nodes
         self.execute('SELECT DISTINCT origin, departure '
                      'FROM %s' % self.table)
@@ -286,18 +303,11 @@ class GraphMaker(object):
                      'FROM %s' % self.table)
         nodes.extend(map(tuple, self.fetchall()))
         self.septa_nodes = {n: {} for n in nodes}
-        print "Loaded SEPTA nodes: count = %d" % len(self.septa_nodes)
+        print "Loaded SEPTA nodes: count = %d (%f)" % (
+            len(self.septa_nodes), time.clock())
 
     def load_edges(self):
         """Populate the three dicts with edges."""
-        # First the stadium-stadium edges
-        e = 0
-        nodes = sorted(self.stadium_nodes.keys())
-        for n1, n2 in zip(nodes, nodes[1:]):
-            t = self.get_delta_mins(n2[1], n1[1])
-            self.stadium_nodes[n1][n2] = t
-            e += 1
-        print "Loaded stadium-stadium edges: count = %d" % e
         # now the zipcode-septa edges
         e = 0
         for zipcode, tgs in self.zip_nodes.items():
@@ -310,7 +320,8 @@ class GraphMaker(object):
             rows = self.fetchall()
             tgs.update({(o, d): 0 for o, d in rows})
             e += len(rows)
-        print "Loaded zipcode-SEPTA edges: count = %d" % e
+        print "Loaded zipcode-SEPTA edges: count = %d (%f)" % (e,
+                                                          time.clock())
         # now the SEPTA-SEPTA and SEPTA-Stadium edges
         e = 0
         nodes = sorted(self.septa_nodes.keys())
@@ -328,22 +339,33 @@ class GraphMaker(object):
             e += len(dapairs)
 
             try:  # This entire block is for the waiting links
-                next_stop, time = nodes[i+1]
+                next_stop, t = nodes[i+1]
             except IndexError:
                 pass
             else:
                 if next_stop == node[0]:
-                    cost = self.get_delta_mins(time, node[1])
+                    cost = self.get_delta_mins(t, node[1])
                     self.septa_nodes[node][nodes[i+1]] =  cost
                     e += 1
 
             if node[0] in STADIUM_STOPS:  # This block is for SEPTA-Stadium
                 cost = STADIUM_STOPS[node[0]]
-                time = self.minutes_to_str(self.get_delta_mins(node[1]) +
+                t = self.minutes_to_str(self.get_delta_mins(node[1]) +
                                            cost)
-                self.septa_nodes[node][(STADIUM_NODE, time)] = cost
+                self.septa_nodes[node][(STADIUM_NODE, t)] = cost
                 e += 1
-        print "Loaded SEPTA-SEPTA and SEPTA-Stadium edges: count = %d" % e
+        print ("Loaded SEPTA-SEPTA and SEPTA-Stadium edges: count = %d (%f)"
+               % (e, time.clock()))
+
+        # the stadium-stadium edges
+        e = 0
+        nodes = sorted(self.stadium_nodes.keys())
+        for n1, n2 in zip(nodes, nodes[1:]):
+            t = self.get_delta_mins(n2[1], n1[1])
+            self.stadium_nodes[n1][n2] = t
+            e += 1
+        print "Loaded stadium-stadium edges: count = %d (%f)" % (e,
+                                                                 time.clock())
         # finally, the zipcode-stadium edges
         if self.overflow:
             e = 0
@@ -351,7 +373,7 @@ class GraphMaker(object):
             for tgts in self.zip_nodes.values():
                 tgts[first_stadium] = self.overflow
                 e += 1
-            print "Loaded overflow edges: count = %d" % e
+            print "Loaded overflow edges: count = %d (%f)" % (e, time.clock())
 
     @staticmethod
     def get_delta_mins(t2, t1="00:00:00"):
