@@ -1,4 +1,3 @@
-
 from __future__ import division
 
 import sqlite3
@@ -175,7 +174,7 @@ def run_ook(graph, demand, capacity):
         raise ValueError("The graph is not weakly connected!")
     flowdict = glpk.mincost_okalg()[0]
     print "Flowdict len:%d" % len(flowdict)
-    node_ids = {node: i for i, node in alias.items()}
+    node_ids = {i: node for node, i in alias.items()}
     output = {}
     for i, d in flowdict.items():
         node = node_ids[i]
