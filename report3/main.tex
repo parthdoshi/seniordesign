@@ -8,35 +8,262 @@
 \addauthor{Felipe Ochoa;felipeo@seas.upenn.edu}
 \advisor{Dr. Andrew E. Huemmler;huemmler@seas.upenn.edu}
 \reportname{Phase 2 Project Report}
-\addbibresource{../sources.bib}
+\addbibresource{sources.bib}
 
 \begin{document}
 \maketitle
 \abstract
 
-Citizens Bank Park, the home stadium of the Philadelphia Phillies,
-is located within city limits and is accessible by car, train and bus. In
-the 81 home games of their 2012 season, the Phillies had an average
-attendance of 44,021, for a total of over 3.5 million fan trips. All 
-these fans generate greenhouse gases traveling to and from the stadium.
+\input{includes/abstract.tex}
 
-The Phillies have started the "Red Goes Green" initiative to reduce their 
-environmental impact by installing solar panels, planting trees, and
-buying offsets for their carbon emmissions. They also offer tips for fans who want to help with this mission.
-No significant efforts have been made so far, however, to quantify and 
-reduce the environmental footprint of these fans traveling to and from 
-the stadium.
+\newpage
 
-This system meets two important needs that would help the Phillies and
-their fans further reduce their carbon footprint.
+\tableofcontents
 
-First, it estimates the total amount of emissions currently generated in 
-based on the average distance traveled by fans and on the types of 
-transportation they use. These parameters are in turn estimated by a 
-comprehensive traffic model.
+\newpage
 
-Second, the system provides fans information regarding alternative travel
-options to and from the stadium by interfacing with the SEPTA website.
-The tool is sensitive to the unusually-high demand placed on transportation infrastructure around the game, and it gives fans information on the congestion levels, travel time, and environmental impact of each travel option.
+\mainmatter
 
+\section{Introduction}
+
+\input{includes/intro.tex}
+
+\section{Discussion of Previous Work}
+
+\input{includes/previous-work.tex}
+
+
+\section{Strategic Plan/Structure}
+
+\input{includes/strategic-plan.tex}
+
+\addtocounter{subsection}{1} %\subsection{Test and Demonstration}
+%\subsubsection{Test}
+%\subsubsection{Demonstration}
+
+\subsection{Schedule}
+The schedule consists of the different tasks that we estimate we will
+need to accomplish in order to have a successful project. The tasks
+can be broken into
+
+\begin{itemize}
+  \item Planning and design
+  \item Creating the required subsystems
+  \item Integrating the subsystems into one system
+  \item Implementation.
+\end{itemize}
+
+Each task is assigned to only one individual although others may also
+be working on the tasks, but the assigned individual is accountable to
+get it done correctly and on time. Based on the Gantt chart and
+schedule it is clear that we aim to work consistently over the course
+of the year to meet the milestones (course requirements) and also aim
+to get some work done over winter break so that we don’t fall behind
+schedule.
+
+We are currently ahead of schedule in some tasks, and behind schedule
+in other tasks. This is similar to our situation when we submitted the
+first project report because we are facing similar obstacles in
+obtaining required information to progress in certain areas. However,
+this is not as much of a concern to us as being completely behind
+schedule because we can alter resource allocation to reconcile the
+variance and bring the project back on schedule.
+
+The two areas where we are behind schedule are:
+
+\begin{enumerate}[label=(\emph{\alph*})]
+  \item Working with the Philles/Eagles
+  \item Working with the Philadelphia Police Department.
+\end{enumerate}
+
+This can be attributed to the major constraint mentioned in the
+introduction. Dr. Huemmler has been trying to get us in touch with
+them, but so far they have not been very responsive.
+
+On November 16th, 2012, Dr. Huemmler sent letters on SEAS letterhead
+paper to the following five individuals in these organizations:
+\begin{description}[style=nextline]
+    \item[Mike DiMuzio]
+  Director of Operations/Facilities, Philadelphia Phillies
+    \item[Julie Hershey]
+  Community Relations, Philadelphia Eagles
+    \item[Zach Hill]
+  Senior Director of Communications, Philadelphia Flyers
+    \item[Michael Preston]
+  Director of Public Relations, Philadlephia 76ers
+    \item[Lt. John Hewitt]
+  PSA Lieutenant
+\end{description}
+
+Dr. Huemmler assures us that we will have meetings set up for the
+middle of January, when we return from winter break. We have formed a
+contingency plan, and updated the schedule so that we can allocate
+more time to this to bring us back on schedule once we have
+established contact. We plan to devote more resources to the subtasks
+that rely on the meetings in order to bring the project back on
+schedule.
+
+Although the delay in contract with the Eagles and Philadelphia PD
+lead us to fall behind in certain areas, we were able to reallocate
+the time and resources that should have been used there, to other
+tasks. These tasks include the SEPTA subsystem and GHG emissions
+subsystem. Although we had originally planned to start these later in
+this semester and next semester (respectively), we were able to start
+and make progress on both of these subsytems during this semester.
+
+Another factor that helped us get ahead of schedule in these areas was
+the fact that we over-estimated the time to complete specific
+tasks. The specific tasks that we over-estimated were the research to
+find the necessary data for the GHG emissions subsystem and the
+programming aspect of the SEPTA subsystem.
+
+Overall, at the end of the first semester we have made significant
+progress, which is discussed in more detail in the Results section. We
+have defined our problem and scope, designed our systems approach and
+began building two of the subsystems. We also plan to have some work
+done over winter break, and consolidate our efforts at the beginning
+of next semester and revise our schedule accordingly.
+
+\section{Preliminary Results}
+As discussed in the schedule discussion in section 3.5, we have made
+significant progress on our project that will be critical to
+supporting our efforts in Phase 2. We have had four main outcomes from
+Phase 1 that we hope to carry forward.
+
+\subsection{Project scope and determination of target user}
+
+Our project started off with the aim of reducing CO2 emissions from
+cars idling in parking lots after sports games. Over the course of
+Phase 1, we have broadened our scope to develop a system to reduce GHG
+emissions as a byproduct of fans travelling to and from sports
+games. This broad aim will be carried forward to Phase 2 to drive us
+to find innovative solutions to problems that we face by keeping the
+overall goal in mind.
+
+Through the semester, we have also determined three possible target
+users for the finished product from our project:
+
+\begin{descenum}
+    \item[Philadelphia Sports Teams] (Eagles/Phillies/Flyers) We could
+develop an interface that would allow the management of these teams to
+determine the impact of various incentives towards reducing GHG
+emissions.
+
+  \item[Philadelphia Police Department] We could develop a mock-up of
+an application that would help streamline traffic direction for fans
+leaving stadiums
+
+  \item[Sports Fans] We could develop a web interface/mock-up that would
+allow users to understand the GHG emission impact of their travels and
+alternatives to reduce this impact.
+\end{descenum}
+
+Our work in Phase 2 will involve determining which target user would
+be the best choice to focus on given the availability of data and
+involvement of the sports teams (as talked about before in the
+report).
+
+\subsection{Overall systems approach}
+As discussed in section 3.1, we
+have developed an overall systems approach to the project that we will
+be using to guide our progress next semester. The system block diagram
+will be used to understand how each module fits into the overall
+system and will help prioritize among competing choices for time
+allocation.
+
+\subsection{SEPTA Subsystem}
+Through Phase 1, we have developed a comprehensive database of all
+SEPTA rail, trolley and transit stations and the lines that operate
+across these stations. This data is stored in a well-typed XML based
+on a DOM that ensures that all required fields are present for each
+station. This database will be used to support further development of
+the train model in calculating the emissions from the train system as
+well as travel time alternatives when suggesting substitution of car
+travel with train travel.
+
+\subsection{GHG Emissions Subsystem}
+Through Phase 1, we
+have developed a comprehensive plan to create the GHG emissions
+subsystem. The discussion above already detailed the creation and
+design of the system, including the input, transfer function and
+output for each of the five iterations. This plan will be used in
+Phase 2 to program the subsystem and create a working model of the GHG
+emissions subsystem.
+
+\addtocounter{section}{1} % \section{Lessons Learned}
+
+\section{Equipment/Fabrication/Software Needs}
+We do not have any need for specialized equipment or software. The
+software we will be using is either publicly available, or available
+at Penn. We expect that our production version of the model will not
+depend on commercial tools.
+
+\addtocounter{section}{1} % \section{Conclusions and Recommendations}
+
+\section{Nomenclature}
+{\centering
+\midcolumnwidth=.8\textwidth plus 10\tabcolsep minus 10\tabcolsep
+\begin{tabular}{%
+    >{\raggedright\bfseries}p{.1\textwidth}%
+    p{\midcolumnwidth}}
+  API & Application programming interface. An official, documented way
+  for a program to access a database or another program, such as that
+  of Google Maps. \\
+  DOM & Document Object Model. A file format that is very easy to
+  parse and yet human-readable. \\
+  EPP & Emissions per passenger. \\
+  EPM & Emissions per mile. \\
+  GHG & Greenhouse gases. We mostly mean Carbon Dioxide, but we use
+  the term GHG since emissions are highly correlated across types in
+  this application. \\
+  HBO & Home-based other. A category of trips in the
+  standard  model. Contrast with HBS, HBW, NHO, and NHW. \\
+  HBS & Home-based shop. A category of trips in the standard
+  model. Refers to trips from the home to go shopping. Contrast with
+  HBO, HBW, NHO, and NHW. \\
+  HBW & Home-based work. A category of trips in the standard
+  model. Refers to trips from the home to go to work. Contrast with
+  HBO, HBS, NHO, and NHW. \\
+  MAG & Maricopa Association of Governments. It is in charge of
+  transportation planning for Phoenix and it surroundings. \\
+  NHO & Non-home-based other. A category of trips in the standard
+  model. Contrast with  HBO, HBS, HBW, and NHW. \\
+  NHW & Non-home-based work. A category of trips in the standard
+  model. Refers to trips not from the home to go to work. Contrast
+  with HBO, HBS, HBW, and NHO. \\
+  SEPTA & Southeast Pennsylvania Transit Authority. Manages the
+  commuter rail, the subway, trolley, and bus systems in and around
+  Philadelphia \\
+  SQL & A type of database that is commonly used. \\
+  TAZ & Traffic analysis zone. Used in modeling the UTMS. It involves
+  dividing a geographical area into units that have sufficiently
+  similar transit and demographics to treat as one for the purposes of
+  the model. \\
+  UTMS & Urban Transportation Modeling System. A commonly used
+  framework to model traffic demand and flows. \\
+  XML & Extensible markup language. A structured file format that is
+  human-readable and easily parseable and customizable. \\
+\end{tabular}
+}
+
+\makereferences
+
+\makebibliography
+
+
+\section{Financial Information}
+We expect our project to incur minimal cost. At this time, the only
+foreseeable expenses are the cost of transportation to the
+stadium. Depending on how we refine the user needs after our meeting
+with the Eagles, we may have to purchase a mobile device on which to
+prototype our model interface.
+
+%\section{Ethical Issues}
+
+\appendix
+
+\section{A Documented Module of Code}
+\lstinputlisting[language=python,basicstyle=\small]{includes/module.py}
 \end{document}
+
+%  LocalWords:  DOM EPP EPM GHG Huemmler Vukan Vuchic ITE
