@@ -157,17 +157,20 @@ def run_ook(graph, demand, capacity):
                                                            total_demand_in,
                                                            total_demand_out)
     assert total_demand_in == total_demand_out
-    for node, i in alias.items():
-        for target, cost in graph[node].items():
-            j = alias[target]
-            assert cost >= 0
-            cap = capacity.get((node, target), 90000)
-            assert cap >= 0
-            glpk.add_edge(i, j)
-            glpk.set_edge_properties((i, j),
-                                     low=0,
-                                     cap=cap,
-                                     cost=cost)
+    def get_edges():
+        for node, i in alias.items():
+            for target, cost in graph[node].items():
+                j = alias[target]
+                assert cost >= 0
+                data = {'cost': cost}
+                try:
+                    data['cap'] = capacity[(node, target)]
+                    assert data['cap'] >= 0
+                except KeyError:
+                    pass
+                yield [(i,j), data]
+
+    glpk.add_edges(get_edges())
     w = glpk.weak_comp()[0]
     print "Made GLPK graph object with %d weak components (%f)" % (w,
                                                     time.clock())

@@ -46,7 +46,7 @@ class Graph(object):
 
     def add_vertices(self, num):
         """Add num vertices to the graph."""
-        GLPK.glp_add_vertices(self.graph_ptr, ctypes.c_int(num))
+        GLPK.glp_add_vertices(self.graph_ptr, num)
 
     def has_node(self, num):
         """Check whether the graph has the given node or not."""
@@ -66,6 +66,24 @@ class Graph(object):
         GLPK.glp_add_arc(self.graph_ptr,
                          ctypes.c_int(base_num),
                          ctypes.c_int(dest_num))
+
+    def add_edges(self, edge_iter):
+        """
+        Adds edges in a batch to the graph.
+
+        edge_iter should be an iterable with items of the form
+
+            ((i, j), {'cap': cap, 'cost': cost, 'low': low})
+
+        where i is the tail node and j is the head node of the edge, cap is
+        the edge capacity, cost is the edge cost, and low is the minimum flow
+        across the edge.
+
+        The default is 0 for low and cost, and INT_MAX for cap if not
+        specified. The entire dictionary can be ommited, in which case the
+        item is allowed to be simply (i, j).
+        """
+        fovgraph.add_edges(self, edge_iter)
 
     def clear_demand(self):
         """Set all node demand to 0."""
@@ -99,20 +117,22 @@ class Graph(object):
 
         Can cause a segmentation fault!
         """
-        np1 = self.graph_ptr[0].v[edge[0]]
-        for edgep in self.get_out_edges(np1[0]):
-            if edge[1] == edgep[0].head[0].i:
-                break
-        try:
-            data = self.edge_data(edgep)
-        except NameError:
-            raise KeyError("(%d, %d) is not in graph!" % edge)
+        data = self.get_edge_data(edge)
         if low:
             data.low = low
         if cap:
             data.cap = cap
         if cost:
             data.cost = cost
+
+    def get_edge_data(self, edge):
+        """Get the pointer to the edge object."""
+        np1 = self.graph_ptr[0].v[edge[0]]
+        for edgep in self.get_out_edges(np1[0]):
+            if edge[1] == edgep[0].head[0].i:
+                return self.edge_data(edgep)
+        raise KeyError("(%d, %d) is not in the graph" % edge)
+
 
     def mincost_okalg(self):
         """
