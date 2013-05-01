@@ -37,160 +37,23 @@
 
 \input{includes/strategic-plan.tex}
 
-\addtocounter{subsection}{1} %\subsection{Test and Demonstration}
+\subsection{Test and Demonstration}
+
 %\subsubsection{Test}
 %\subsubsection{Demonstration}
+\input{includes/tests_and_demo.tex}
 
 \subsection{Schedule}
-The schedule consists of the different tasks that we estimate we will
-need to accomplish in order to have a successful project. The tasks
-can be broken into
 
-\begin{itemize}
-  \item Planning and design
-  \item Creating the required subsystems
-  \item Integrating the subsystems into one system
-  \item Implementation.
-\end{itemize}
+\input{includes/schedule.tex}
 
-Each task is assigned to only one individual although others may also
-be working on the tasks, but the assigned individual is accountable to
-get it done correctly and on time. Based on the Gantt chart and
-schedule it is clear that we aim to work consistently over the course
-of the year to meet the milestones (course requirements) and also aim
-to get some work done over winter break so that we don’t fall behind
-schedule.
+\section{Results}
 
-We are currently ahead of schedule in some tasks, and behind schedule
-in other tasks. This is similar to our situation when we submitted the
-first project report because we are facing similar obstacles in
-obtaining required information to progress in certain areas. However,
-this is not as much of a concern to us as being completely behind
-schedule because we can alter resource allocation to reconcile the
-variance and bring the project back on schedule.
+\input{includes/results.tex}
 
-The two areas where we are behind schedule are:
+\section{Lessons Learned}
 
-\begin{enumerate}[label=(\emph{\alph*})]
-  \item Working with the Philles/Eagles
-  \item Working with the Philadelphia Police Department.
-\end{enumerate}
-
-This can be attributed to the major constraint mentioned in the
-introduction. Dr. Huemmler has been trying to get us in touch with
-them, but so far they have not been very responsive.
-
-On November 16th, 2012, Dr. Huemmler sent letters on SEAS letterhead
-paper to the following five individuals in these organizations:
-\begin{description}[style=nextline]
-    \item[Mike DiMuzio]
-  Director of Operations/Facilities, Philadelphia Phillies
-    \item[Julie Hershey]
-  Community Relations, Philadelphia Eagles
-    \item[Zach Hill]
-  Senior Director of Communications, Philadelphia Flyers
-    \item[Michael Preston]
-  Director of Public Relations, Philadlephia 76ers
-    \item[Lt. John Hewitt]
-  PSA Lieutenant
-\end{description}
-
-Dr. Huemmler assures us that we will have meetings set up for the
-middle of January, when we return from winter break. We have formed a
-contingency plan, and updated the schedule so that we can allocate
-more time to this to bring us back on schedule once we have
-established contact. We plan to devote more resources to the subtasks
-that rely on the meetings in order to bring the project back on
-schedule.
-
-Although the delay in contract with the Eagles and Philadelphia PD
-lead us to fall behind in certain areas, we were able to reallocate
-the time and resources that should have been used there, to other
-tasks. These tasks include the SEPTA subsystem and GHG emissions
-subsystem. Although we had originally planned to start these later in
-this semester and next semester (respectively), we were able to start
-and make progress on both of these subsytems during this semester.
-
-Another factor that helped us get ahead of schedule in these areas was
-the fact that we over-estimated the time to complete specific
-tasks. The specific tasks that we over-estimated were the research to
-find the necessary data for the GHG emissions subsystem and the
-programming aspect of the SEPTA subsystem.
-
-Overall, at the end of the first semester we have made significant
-progress, which is discussed in more detail in the Results section. We
-have defined our problem and scope, designed our systems approach and
-began building two of the subsystems. We also plan to have some work
-done over winter break, and consolidate our efforts at the beginning
-of next semester and revise our schedule accordingly.
-
-\section{Preliminary Results}
-As discussed in the schedule discussion in section 3.5, we have made
-significant progress on our project that will be critical to
-supporting our efforts in Phase 2. We have had four main outcomes from
-Phase 1 that we hope to carry forward.
-
-\subsection{Project scope and determination of target user}
-
-Our project started off with the aim of reducing CO2 emissions from
-cars idling in parking lots after sports games. Over the course of
-Phase 1, we have broadened our scope to develop a system to reduce GHG
-emissions as a byproduct of fans travelling to and from sports
-games. This broad aim will be carried forward to Phase 2 to drive us
-to find innovative solutions to problems that we face by keeping the
-overall goal in mind.
-
-Through the semester, we have also determined three possible target
-users for the finished product from our project:
-
-\begin{descenum}
-    \item[Philadelphia Sports Teams] (Eagles/Phillies/Flyers) We could
-develop an interface that would allow the management of these teams to
-determine the impact of various incentives towards reducing GHG
-emissions.
-
-  \item[Philadelphia Police Department] We could develop a mock-up of
-an application that would help streamline traffic direction for fans
-leaving stadiums
-
-  \item[Sports Fans] We could develop a web interface/mock-up that would
-allow users to understand the GHG emission impact of their travels and
-alternatives to reduce this impact.
-\end{descenum}
-
-Our work in Phase 2 will involve determining which target user would
-be the best choice to focus on given the availability of data and
-involvement of the sports teams (as talked about before in the
-report).
-
-\subsection{Overall systems approach}
-As discussed in section 3.1, we
-have developed an overall systems approach to the project that we will
-be using to guide our progress next semester. The system block diagram
-will be used to understand how each module fits into the overall
-system and will help prioritize among competing choices for time
-allocation.
-
-\subsection{SEPTA Subsystem}
-Through Phase 1, we have developed a comprehensive database of all
-SEPTA rail, trolley and transit stations and the lines that operate
-across these stations. This data is stored in a well-typed XML based
-on a DOM that ensures that all required fields are present for each
-station. This database will be used to support further development of
-the train model in calculating the emissions from the train system as
-well as travel time alternatives when suggesting substitution of car
-travel with train travel.
-
-\subsection{GHG Emissions Subsystem}
-Through Phase 1, we
-have developed a comprehensive plan to create the GHG emissions
-subsystem. The discussion above already detailed the creation and
-design of the system, including the input, transfer function and
-output for each of the five iterations. This plan will be used in
-Phase 2 to program the subsystem and create a working model of the GHG
-emissions subsystem.
-
-\addtocounter{section}{1} % \section{Lessons Learned}
+\input{includes/lessons.tex}
 
 \section{Equipment/Fabrication/Software Needs}
 We do not have any need for specialized equipment or software. The
@@ -198,7 +61,9 @@ software we will be using is either publicly available, or available
 at Penn. We expect that our production version of the model will not
 depend on commercial tools.
 
-\addtocounter{section}{1} % \section{Conclusions and Recommendations}
+\section{Conclusions and Recommendations}
+
+\input{conclusions}
 
 \section{Nomenclature}
 {\centering
@@ -258,7 +123,9 @@ stadium. Depending on how we refine the user needs after our meeting
 with the Eagles, we may have to purchase a mobile device on which to
 prototype our model interface.
 
-%\section{Ethical Issues}
+\section{Ethical Issues}
+
+\input{includes/ethics.tex}
 
 \appendix
 
