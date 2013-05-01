@@ -1,0 +1,6 @@
+Test
+
+Demonstration
+On demo day we had two deliverables: the project poster and the mock-up of the web application.
+The poster aimed to provide a quick, concise overview of our project. It contained the abstract, a definition of the problem we are trying to solve and our project objectives. It also contained diagrams of the car network that we created, the backend and frontend system block diagrams as well as a sample block diagram for a specific subsystem (the SEPTA subsystem). We also discussed validation techniques that were utilized and presented some graphical results from our model to highlight the benefits of switching from cars to SEPTA.
+The website was a basic web application that is described in detail in the Results section below. It is aimed at informing users about the tradeoff of choosing to take a car to the game in place of public transportation as well as providing information about the next home game and the weather at the time of the next home game. Additionally, alternative measures to reduce carbon impact are suggested for users who were averse to the switch. The website was created to be interactive, where judges and other observers were able to select from a limited set of zip codes to see how the user would interact with the finished product.
