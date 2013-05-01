@@ -8,7 +8,7 @@ import sqlite3
 CONN = sqlite3.connect('final.db')
 CURSOR = CONN.cursor()
 
-RESULTS_FILE = "results-to-stadium.csv"
+RESULTS_FILE = "results.csv"
 OUTPUT = "congestion.csv"
 STADIUM_NODE = 0
 GAMETIME = 19 * 60 + 5  # In minutes since midnigth
@@ -19,13 +19,8 @@ def main():
     nxg, dest = guido_to_nx(flows)
     comps = nx.weakly_connected_components(nxg)
     comps.sort(key=len)
-    print "%d weakly connected components" % len(comps)
-    print "Sizes: " + ', '.join('%d' % len(c) for c in comps)
-    print "Comp1: {%r, %r}:" % tuple(comps[0]),
-    print flows[19145][(152, u'18:54:00')]
-    print "Comp2: {%r, %r}:" % tuple(comps[1]),
-    print flows[19114][(31487, u'18:54:00')]
-    return
+    print "%d weakly connected component%s" % (len(comps),
+                                               "s" if len(comps) > 1 else "")
     congestion = {}
     for z in zips:
         congs = []
@@ -33,7 +28,9 @@ def main():
             for path in get_paths(nxg, z, dest):
                 congs.append(get_congestion(nxg, path))
         except nx.NetworkXNoPath:
-            raise ValueError("No path from %d to %r" % (z, dest))
+            print z
+            continue
+            #raise ValueError("No path from %d to %r" % (z, dest))
         congestion[z] = sum(congs) / len(congs)
     with open(OUTPUT, 'w') as f:
         for z, c in congestion.items():

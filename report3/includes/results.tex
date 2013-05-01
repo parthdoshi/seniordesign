@@ -18,7 +18,7 @@ trips originating from each zip code to the stadium.
   \label{fig-trip-generation-results}
 \end{figure}
 
-Looking at the results of the Gravity Model we can tell that ...f
+Looking at the results of the Gravity Model we can tell that ...
 
 For more accuracy we could include more factors in the model such as
 average income of the people living in the zone. We could also use
@@ -109,15 +109,24 @@ travel alternatives to the user.
 \subsubsection{Car-Micro}
 
 We developed a simulation capable of reproducing the exiting dynamics
-of thousands of cars through a complex network of roads. The
-simulation adheres to state-of-the art modeling principles and pushes
-the limit on queue-based traffic modeling.
+of thousands of cars through a complex network of roads. Figure
+\ref{fig-car-micro-network} shows the parking lot network on which the
+simulation ran. The simulation adheres to state-of-the art modeling
+principles and pushes the limit on queue-based traffic modeling.
+
+\begin{figure}[htp]
+  \centering
+  \includegraphics[height=8cm]{graphics/network-flow.png}
+  \caption{Network model of the Citizen's Park parking lots}
+  \label{fig-car-micro-network}
+\end{figure}
+
 
 \subsubsection{Support Tools}
 As a side-benefit (or prerequisite) of developing these graph-based
-simulations, we developed a series of graphical tools for
-building and manipulating graphs as well as a Python wrapper for the
-popular graph manipulation that will be released as open-source software.
+simulations, we developed a series of graphical tools for building and
+manipulating graphs as well as a Python wrapper for the popular C
+graph library, GLPK, that will be released as open-source software.
 
 \subsubsection{Car-Macro}
 

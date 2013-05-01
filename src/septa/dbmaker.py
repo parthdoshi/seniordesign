@@ -11,7 +11,18 @@ def get_str(mins):
     m = mins % 60
     return "%02d:%02d:00" % (h, m)
 
-TOTAL_RIDERSHIP = 31000000
+class RidershipData:
+
+    # DATA IN THOUSANDS
+    AVG_DAILY_P = 830
+    AVG_WEEKDAY_P = 1150
+    AVG_WEEKEND_P = int((7 * AVG_DAILY_P - 5 * AVG_WEEKDAY_P) / 2)
+    YEAR_PASSENGER_MILES = int(1526.795 * 1000)
+    AVG_DAILY_PM = YEAR_PASSENGER_MILES / 365
+    AVG_WEEKDAY_PM = int(AVG_DAILY_PM * AVG_WEEKDAY_P / AVG_DAILY_P)
+    AVG_WEEKEND_PM = int(AVG_DAILY_PM * AVG_WEEKEND_P / AVG_DAILY_P)
+
+TOTAL_RIDERSHIP = ??
 
 PER_BLOCK = [
     ("00:00:00", 0),
