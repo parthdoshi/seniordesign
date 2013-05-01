@@ -1,62 +1,63 @@
+\section{Introduction}
 \subsection{Overview}
 Stadium Traffic aims to reduce the greenhouse gas (GHG) emissions from
-people going to and from sports games. In particular, our project will
-focus on the Philadelphia Eagles and Phillies stadiums.  We aim to
-build a model that can be used to quantify the GHG emissions generated
-due to people coming to and going from games. We will then develop
-solutions to reduce the number of people coming by cars or leave over
-longer time period and develop a traffic routing algorithm, aiming to
-reduce the GHG emissions from idling cars waiting to leave the
-stadium. We will test these on our model to find a successful
-combination. If we can get the cooperation of Phillies/Eagles/Flyers
-and Philadelphia Police Department, we hope to work with them to
-implement the results of our project.
+people going to and from sports games. In particular, our project
+focuses on the Citizens Bank Park where fans of the Philadelphia
+Phillies support their team at home games. We have built a model that
+can be used to quantify the GHG emissions generated due to people
+coming to and going from games using cars as well as public
+transportation. We have created a front-end website that fans can use
+to understand the environmental impact of their mode-choice in
+traveling to and from home games. Our project is endorsed by the
+Philadelphia Phillies. They have recognized our efforts toward
+reducing GHG emissions due to fans traveling to and from these home
+games and reducing congestion in the parking lots at the stadium by
+encouraging fans to switch to SEPTA.
 
 \subsection{Motivation}
 All of us have been to large gatherings like sports games, concerts or
 conferences and can therefore relate to the traffic problems when
 everyone is trying to leave at the same time at the end of the
-event. However, what most people don't realize is the environmental
+event. However, what most people don’t realize is the environmental
 effect of this traffic. Our project aims to find solutions to reduce
 this traffic and hence reduce the emissions while cars idle in parking
 lots trying to leave.
 
-The project is focusing on the Philadelphia Eagles, Phillies and
-Flyers stadiums. Sports events draw huge crowds at peak traffic hours
-and are therefore a great instance on which to model our project. The
-Eagles are also undertaking a Go Green! initiative, which is a push
+The project is focusing on the Philadelphia Phillies stadium, but the
+underlying models adaptable to other venues hosting large-scale
+events. Sports events draw huge crowds at peak traffic hours and are
+therefore a great instance on which to model our project. The Phillies
+are also undertaking the “Red Goes Green” initiative, which is a push
 towards becoming more environmentally conscious. Some initiatives that
-they have taken are the use of renewable energy sources for their
-power consumption and using cups and plates made from recycled
-materials. We believe that we can get the support of the Eagles for
-our project, as it can be part of the Go Green! initiative and further
-reduce the carbon footprint of the stadium.
+they have taken are the use of solar energy sources for their power
+consumption and partnering with the Pennsylvania Horticultural Society
+to plant one million trees to counteract the aforementioned carbon
+emissions. We believe that our project will be helpful to the Phillies
+to integrate into their Red Goes Green initiative and further reduce
+the carbon footprint of the stadium.
 
-When the football or baseball game ends, everyone tries to the leave
-the stadium at the same time. Although traffic police conduct the
-traffic, they do it in a haphazard way. Furthermore, the decision of
-which gates to be open and which ones to remain closed is also done
-using intuition rather than any efficiency-maximizing algorithm. We
-saw this inefficient process as an opportunity to develop an algorithm
-to reduce car idling time and GHG emissions.
+When a typical baseball game ends, everyone tries to the leave the
+stadium at the same time. Although traffic police conduct the traffic,
+they do it in a haphazard and unscientific manner. Furthermore, the
+decision of which gates to be open and which ones to remain closed is
+also done using intuition rather than any efficiency-maximizing
+algorithm. We saw this inefficient process as an opportunity to
+develop an algorithm to reduce car idling time and GHG emissions.
 
 \subsection{Project Goal and Objectives}
-Although the overarching aim of our project is to reduce GHG
-emissions due to people going to/from the sports games, we broke this
-down into certain specific and measurable objectives:
+Although the overarching aim of our project is to reduce GHG emissions
+due to people going to/from the sports games, we broke this down into
+certain specific, measurable objectives:
 
 \begin{enumerate}
     \item Develop a comprehensive model of transportation to and from
   the stadium.
-    \item Quantify the total emissions due to transportation to/from
-  games.
-    \item Develop a tool to simulate the emissions impact of various
-  initiatives to reduce private transportation usage (e.g. offering a
-  discounted drink to someone who rides the SEPTA).
-    \item Create an algorithm to optimally route exiting vehicle traffic
-  according to total emissions generated.
-    \item Develop a method for the Philadelphia traffic police to
-  implement the traffic routing recommendations of our project.
+    \item Quantify the total emissions due to transportation to and
+  from games.
+    \item Optimally route exiting vehicle traffic according to total
+  emissions generated.
+    \item Inform fans of the change in travel time and carbon
+  emissions by using public transport rather than cars.
 \end{enumerate}
 
 The success of each of the objectives can be measured and how we would
@@ -70,36 +71,32 @@ The aim of the project is to reduce GHG emissions, so we need to be
 able to measure and quantify GHG emissions from idling cars.
 
 Our model should be able to quantify the effect of different
-incentives on GHG emissions so that we can test different
-strategies and find the optimal combination.
+incentives on GHG emissions so that we can test different strategies
+and find the optimal combination.
 
-Optimal routing of traffic can impact GHG emissions from idling
-cars, so we need to create an algorithm that can be constraint
-optimized. A working algorithm can help the traffic police conduct
-traffic in a more organized manner.
+Optimal routing of traffic can impact GHG emissions from idling cars,
+so we need to create an algorithm that can take into account which
+gates are open or closed and simulate appropriate car routing.
 
-Having a front-end system that can be used by the Philadelphia Police
-will allow our algorithm to be implemented and hence allow our project
-to have an impact. Therefore we need a mock-up of a computer or phone application
-that can be used by the police while conducting traffic.
+A front-end system that allows fans to understand the impact of their
+decisions would allow our project to have the greatest impact. The
+system should allow for alternatives should fans decide that they wish
+to opt for the less environmentally-friendly option. A mock-up of a
+website would be ideal to accomplish this goal.
 
 \subsection{Constraints}
-The main constraint is the cooperation of the Philadelphia
-Eagles/Phillies/Flyers and Philadelphia Police Department because without
-their cooperation we cannot implement our project. However, our
-advisor Dr. Huemmler has good relationships with both sets of organizations
-and has been trying to get their support for the project.
+The main constraint is the cooperation of the Philadelphia Phillies
+since they would act as our primary data source. Through the course of
+the project, we had difficulties establishing concrete contact with
+the Phillies and had to resort to alternative data collection and
+measurement techniques. However, we have received the Phillies
+endorsement for our project and hope that it will be officially
+integrated with their Red Goes Green initiative in the near future.
 
-Another constraint is the team's lack of experience with
-transportation engineering.  Since the project involves the
+Another constraint is the team’s lack of experience with
+transportation engineering. Since the project involves the
 understanding, modeling and optimizing of transport systems, this
 would be a constraint. However, we have taken an initiative to get the
 help of Professor Vukan Vuchic, a senior professor in transport
 engineering, and began familiarizing ourselves with relevant transport
 systems concepts under his guidance.
-
-Finally, our last constraint is the data collection required to build
-a representative model. However, we have been trying to get the
-required information from the Eagles, Phillies, Flyers and other government
-departments.
-
