@@ -116,11 +116,30 @@ more detail below:
         extracted from maps and planning documents. This portion was
         used to model the exiting cars, since we believed the
         congestion at the end of a game results in substantial GHG
-        emissions, lost time, and inconvenience to the end user. This
-        simulation was carried out stochastically, as described in
-        \cite{van2007modeling}. We expanded the approach in that paper
-        to include as many queues as we need for the parking lot
-        network.
+        emissions, lost time, and inconvenience to the end user.
+
+        This simulation was carried out as a combination of stochastic
+        and path-based user equilibrium models. Specifically, we
+        modeled each intersection as a single server with multiple
+        queues, with parameters as specified in
+        \cite{akccelik1991travel}. By considering the entire network
+        as a single machine, we were able to efficiently simulate all
+        queues simultaneously. After each crossing event, every car
+        computed the shortest path to the exit using an algorithm
+        similar to that of \cite{nie2010class}. Although the
+        stochastic element permitted deviations from UE, the frequent
+        recomputing ensured these errors were rapidly corrected.
+
+        Figure \ref{fig-car-micro} has a block diagram describing the
+        algorithm.
+
+        \begin{figure}[htp]
+          \centering
+          \includegraphics[height=8cm]{graphics/car-micro.png}
+          \caption{System block diagram of our car-micro model}
+          \label{fig-car-micro}
+        \end{figure}
+
           \item At a "macro" level, we used the same TAZs as in the
         trip generation phase, and calculated a sample path to the
         stadium based on highways and main roads. We collected this

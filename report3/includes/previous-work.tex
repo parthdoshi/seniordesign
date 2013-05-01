@@ -27,9 +27,8 @@ the four-stage model, which breaks down into four components:
     \item Trip Assignment
 \end{enumerate}
 
-In all the applications we've seen, each of those stages is further
-refined by the category of the trip being modeled. The usual breakdown
-is:
+In all the applications saw, each of those stages is further refined
+by the category of the trip being modeled. The usual breakdown is:
 
 \begin{description}
   \item[Home-based work] (HBW) Trips from home to work or vice versa.
@@ -43,7 +42,7 @@ origin or destination.
 
 One of the main benefits of the trip-based approach is its long
 history and current widespread use. The model is also readily
-modularized, and can be easily adapted and specialized for our
+modularized, and was easily adapted and specialized for our
 purposes. On the other hand, it is more simplistic than the
 activity-based model, since it ignores the interactions of past trips
 generated on future trip generation. The activity-based model,
@@ -51,8 +50,8 @@ however, has a clear computational disadvantage. The level of detail
 the model reaches means that it is very demanding computationally, and
 is also hard to break into subcomponents.
 
-Our approach will combine aspects from both styles (as detailed in
-section 3), but will borrow the terminology of the trip-based style.
+Our approach combined aspects from both styles (as detailed in section
+3), but borrowing the terminology of the trip-based style.
 
 \subsubsection{Phoenix, Arizona Planning Authority}
 In 2011 the planning authority in Phoenix, Arizona, MAG, undertook an
@@ -62,30 +61,77 @@ under their category of a planned special event. The authors identify
 the proportion of special events patrons who utilized light rail
 v. alternative modes of transportation and their approach to modeling
 demand and modal choice for this event. While the results are specific
-to their application, the methodology can be adapted to our specific
+to their application, the methodology helped inform our own approach.
 focus.
-
-\subsubsection{ITE Trip Generation Database}
-The ITE compiled a database with various data patterns related to Trip
-Generation. \cite{ite08} We will be able to use the information it contains,
-specifically the information related to the special events travel,
-e.g. sports games and movies.
 
 \subsubsection{Robertson Stadium}
 Gunda Corporation performed a relatively similar project to the one we
-are developing for Robertson Stadium at the University of
+developed for Robertson Stadium at the University of
 Houston.\cite{gunda} Although the stadium has a lower capacity than
-the Eagles stadium, \cite{robertson-stadium} it is home to an MLS
+the Phillies stadium, \cite{robertson-stadium} it is home to an MLS
 team, and has to abide by all the traffic management principles of a
 professional sports team. The scope and aim of Gunda's analysis
-differed from our own, but their analysis can strongly inform a
-component of our model. (The micro-car module, see Section \ref{cars})
+differed from our own, but their analysis helped guide our design of
+a component of our model. (The micro-car module, see section 3)
+
+\subsection{Time-Expanded Graphs}
+Much of our work on the SEPTA model, discussed in section 3, was
+informed by the work of Frank Schulz in his
+dissertation\cite{schulz2005timetable}. The timetable routing problem
+is a special class of traffic assignment problem in which time is
+naturally discretized (by the timetable). Because of this special
+structure, these problems don't need to rely on the inaccurate or
+computationally expensive algorithms that discretize time. Instead,
+the \emph{time-expanded graph} refers to a graph where nodes
+correspond to moments in time at a particular location (e.g., Grand
+Central at 3:15pm). Edges correspond to direct transit lines between
+two space-time locations.
+
+Although we did not venture into the more sophisticated algorithms
+described in \cite{kohler2002time}, the discussion about their
+computational efficiency helped us make certain design choices
+discussed in section 3. Also of use in this regard were
+\cite{xuan2003computing} and \cite{george2008time}.
+
+
+\subsection{Queue-Based Modeling}
+Our work on the micro car model, also discussed in section 3, took a
+completely different approach to that of the SEPTA model. The
+queue-based approach that we used is described in great detail in
+\cite{van2007modeling}. As described by Van Woensel and Vandaele,
+queueing models are primarily used to model individual intersections,
+as in \cite{ruskin2002modeling} or \cite{kyte2009validating}. These
+queueing models operate by considering car arrivals as a stochastic
+process with a single server at the intersection. The focus of these
+types of models is more on the interaction of multiple cars at an
+intersection, like in \cite{prasetijo2012capacity}.
+
+Our model differed in two important ways from those mentioned above
+
+\begin{enumerate}
+    \item All the cars in the stadium parking lot are headed in the
+  same direction: \emph{out}
+    \item The parking lot we considered has over 100 nodes
+\end{enumerate}
+
+\subsection{Dynamic Traffic Assignment}
+When specialized to cars, the assignment problem can be solved in a
+variety of ways. One particularly high-level distinction is between
+static and dynamic assignment, which can be thought of roughly as the
+difference between the steady-state and the transient solution to the
+problem. The algorithm we developed had at its core the ideas
+developed by Dial \cite{dial2006path} and Nie
+\cite{nie2010class}. They describe a class of algorithms to
+efficiently solve the dynamic traffic assignment problem and a metric
+called user equilibrium (UE) to measure the effectiveness of these
+algorithms. Boyce \cite{boyce2003convergence} has an extended
+discussion of user equilibrium.
 
 \subsection{Group Members' Prior Work}
-One of our group members has had experience working with Penn Transit
+One of our group members had had experience working with Penn Transit
 to improve the dispatching efficiency of their bus operations around
-campus. This work has allowed for in-depth understanding of queuing
-theory and demand generation, which will be extremely useful in our
-module about fans taking cars to the game. Using elements of the prior
-project, combined with additional concepts from traffic engineering,
-we will be able to develop an accurate model.
+campus. This work allowed for in-depth understanding of queuing theory
+and demand generation, which was extremely useful in our micro car
+module, described in more detail in section 3. Using elements of the
+prior project, combined with additional concepts from traffic
+engineering, we developed an accurate model.
