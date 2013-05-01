@@ -15,9 +15,9 @@ performance estimates).
 The memory footprint of the CGI script was tested using the standard
 library module \emph{resource}. The module provides a memory-checking
 function called \texttt{getrusage()} \cite{php-memory} that has an
-attribute ru_maxrss that gives total memory usage for the calling
-process. We were able to test that we met the specification set out
-for the CGI script (10 MB).
+attribute \verb|ru_maxrss| that gives total memory usage for the
+calling process. We were able to test that we met the specification
+set out for the CGI script (10 MB).
 
 The aesthetic appeal and functionality were tested by demoing the
 website to sample users who provided feedback on the user experience
@@ -39,9 +39,9 @@ correctly. Once that was verified, the models were run on the
 full-scale system in order to ensure that the execution completed
 within a day (as determined by the frequency of baseball games). In
 addition, the models were run under memory-checking tools, including
-\textt{Valgrind} (for the programming language C), in order to ensure that the
-model did not leak memory or utilize more than was specified in the
-system specification.
+\texttt{Valgrind} (for the programming language C), in order to ensure
+that the model did not leak memory or utilize more than was specified
+in the system specification.
 
 \subsubsection{Demonstration}
 

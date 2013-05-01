@@ -32,16 +32,20 @@ then
   if [ $? -eq 0 ]; then
       echo "LaTeX 2nd Pass"
       texcommand > /dev/null
-  else exit; fi
+  fi
   if [ $? -eq 0 ]; then
       echo "LaTeX 3rd Pass"
       texcommand
-  else exit; fi
+  fi
+
+  if [ $? -eq 0 ]; then
+  echo "Linking pdf to" "$outfile"
+  ln main.pdf $outfile
+  fi
 
   echo "Removing LaTeX Garbage"
   rm -f main.aux main.bbl main.bcf main.blg main.log main.run.xml main.toc
-  echo "Linking pdf to" "$outfile"
-  ln main.pdf $outfile
+
 else
   echo "main.tex not found!"
 fi
