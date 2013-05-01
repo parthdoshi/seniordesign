@@ -36,7 +36,7 @@ provided in the February 2013 Revenue and Ridership Report:
 
 \begin{figure}[htp]
   \centering
-  \includegraphics[height=7cm]{graphics/ridership-per-period.png}
+  \includegraphics[height=8cm]{graphics/ridership-per-period.png}
   \caption{Average Daily Ridership By Time Period}
   \label{fig-ridership-per-period}
 \end{figure}
@@ -86,11 +86,29 @@ us 2.
 
 \subsubsection{SEPTA}
 
-TBD
+We developed a software module capable of interacting with SEPTA's
+data feed, accounting for ``background'' ridership, and routing fans
+to the stadium in the most efficient manner possible. The system does
+this routing while ensuring now train or bus is filled beyond
+capacity, and subject to fan arrival distributions. Once the
+large-scale solution has been stored, the system can calculate
+incremental changes to demand very quickly, as well as compute summary
+statistics for any path. These statistics include:
+
+\begin{itemize}
+  \item Total duration
+  \item Number of line changes
+  \item Expected congestion level across the path
+  \item Total waiting time
+\end{itemize}
+
+Additionally, we developed a module to map zip codes to SEPTA
+stations, which can be combined with the above to present a variety of
+travel alternatives to the user.
 
 \subsubsection{Car-Micro}
 
-TBD
+We developed a simulation capable of evaluating
 
 \subsubsection{Car-Macro}
 
@@ -102,14 +120,36 @@ run two times for each zip code in a given set $Z$, which yields a
 runtime of $O(|Z|)$, giving us the distance and time for both modes of
 transportation, driving and transit.
 
-Exhibit xx shows a table that provides a snippet of the zip code,
-distance and time data when using transit to/from the stadium.
+Table \ref{tab-zip-dists} shows a table that provides a snippet of the
+zip code, distance and time data when using transit to/from the
+stadium.
 
-\begin{figure}[htp]
+\begin{table}[htp]
   \centering
-  \includegraphics[height=8cm]{graphics/car-macro-ex.png}
-  \caption{}
-\end{figure}
+  \caption{Distance from the stadium by zipcode (excerpt)}
+  \label{tab-zip-dists}
+  \begin{tabular}{ccc}
+    \firsthline
+    \bfseries Zipcode & \bfseries Distance & \bfseries Time \\
+    & (m) & (min) \\ \hline
+    19101 & 6,282 & 22.6 \\
+    19102 & 7,048 & 22.6 \\
+    19103 & 7,209 & 27.7 \\
+    19104 & 9,011 & 28.4 \\
+    19105 & 5,311 & 31.3 \\
+    19106 & 6,441 & 25.2 \\
+    19107 & 5,919 & 35.8 \\
+    19108 & 6,356 & 30.7 \\
+    19109 & 5,935 & 33.1 \\
+    19110 & 5,948 & 22.7 \\
+    19111 & 24,602 & 72.0 \\
+    19112 & 3,134 & 38.2 \\
+    19113 & 14,313 & 31.8 \\
+    19114 & 29,006 & 74.4 \\
+    19115 & 27,310 & 76.1 \\
+    \lasthline
+  \end{tabular}
+\end{table}
 
 \subsubsection{Transportation and GHG Results}
 
@@ -127,7 +167,7 @@ second comparative result.
 
 \begin{figure}[htp]
   \centering
-  \includegraphics[height=8cm]{graphics/graph2.png}
+  \includegraphics[height=8cm]{graphics/graph1.png}
   \caption{}
 \end{figure}
 
@@ -210,12 +250,12 @@ user input.
   the main ``output'' of our project.
   \begin{figure}[htp]
     \centering
-    \begin{subfigure}{.4\textwidth}
-      \includegraphics[height=8cm]{graphics/website/results-map.png}
+    \begin{subfigure}{14cm}
+      \includegraphics[height=7.22cm]{graphics/website/results-map.png}
       \caption{}
-    \end{subfigure}
-    \begin{subfigure}{.4\textwidth}
-      \includegraphics[height=8cm]{graphics/website/results-table.png}
+    \end{subfigure} \\
+    \begin{subfigure}{14cm}
+      \includegraphics[height=5.24cm]{graphics/website/results-table.png}
       \caption{}
     \end{subfigure}
   \end{figure}
@@ -241,7 +281,7 @@ user input.
 
   \begin{figure}[htp]
     \centering
-    \includegraphics[height=8cm]{graphics/website/motivation.png}
+    \includegraphics[height=3.65cm]{graphics/website/motivation.png}
     \caption{}
   \end{figure}
 
