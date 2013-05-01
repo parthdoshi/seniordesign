@@ -1,4 +1,3 @@
-
 from __future__ import division
 
 import sqlite3
@@ -9,7 +8,7 @@ LINK_DB = "final.db"           # Path to database
 TABLE_NAME = "links"           # Name of link table in database
 DEMAND_FILE = "demand.csv"     # Path to demand CSV
 OUTPUT = "results.csv"         # Where to output results
-OVERFLOW = 1                   # Cost of overflow links (0 for infinity)
+OVERFLOW = 60 * 24                   # Cost of overflow links (0 for infinity)
 GAMETIME = 19 * 60 + 5         # In minutes since midnight
 
 GRAPH_FILE = "graph.dimacs"  # Path to DIMACS file
