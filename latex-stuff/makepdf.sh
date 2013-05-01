@@ -1,6 +1,6 @@
 #!/bin/sh
 
-outfile=abstract.pdf
+outfile=Team13.pdf
 
 texcommand()
 {
@@ -16,7 +16,7 @@ texcommand()
 if [ -f main.tex ]
 then
   echo "Linking style file into directory"
-  ln -s ../latex-stuf/sd.sty .
+  ln -s ../latex-stuff/sd.sty .
 
   echo "Removing LaTeX Garbage"
   rm -f main.aux main.bbl main.bcf main.blg main.log main.run.xml main.toc

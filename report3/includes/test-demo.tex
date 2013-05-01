@@ -14,9 +14,10 @@ performance estimates).
 
 The memory footprint of the CGI script was tested using the standard
 library module \emph{resource}. The module provides a memory-checking
-function called getrusage() that has an attribute ru_maxrss that gives
-total memory usage for the calling process. We were able to test that
-we met the specification set out for the CGI script (10 MB).
+function called \texttt{getrusage()} \cite{php-memory} that has an
+attribute ru_maxrss that gives total memory usage for the calling
+process. We were able to test that we met the specification set out
+for the CGI script (10 MB).
 
 The aesthetic appeal and functionality were tested by demoing the
 website to sample users who provided feedback on the user experience

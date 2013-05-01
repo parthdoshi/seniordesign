@@ -1,2 +1,54 @@
 
+Because of the resource-intensiveness of traffic simulations and the
+rapid responses required by web requests, our system had to maintain a
+cache of values to meet the specifications described below. We
+considered two main ways of implementing this cache.
+
+\begin{description}
+    \item[Daemon] Maintain a constantly running process with the
+  system code and allow the web requests to interact with this
+  processes. In this scenario the cache would be program's state.
+    \item[Database] Run the simulation periodically and store the
+  entire output in a database and allow requests would to query this
+  database. In this scenario the cache would be the database.
+\end{description}
+
+Since modularity was an important design consideration for us, we
+opted for the second alternative.
+
 \subsection{System Proposed Approach}
+
+The system we built consists of two primary subsystems, each of which
+is further divided into modules, as shown in figures
+\ref{fig-back-end} and \ref{fig-front-end}.
+
+\begin{figure}[htp]
+  \centering
+  \includegraphics[height=8cm]{graphics/back-end.png}
+  \caption{System block diagram of our back-end model}
+  \label{fig-back-end}
+\end{figure}
+
+\begin{figure}[htp]
+  \centering
+  \includegraphics[height=8cm]{graphics/front-end.png}
+  \caption{System block diagram of our front-end model}
+  \label{fig-front-end}
+\end{figure}
+
+The front-end system consisted of a web server to select and display
+the relevant information for a user navigating to the site. As
+described in further in detail in section \ref{sec-specs}, this system
+needed to be fast and lightweight. An important consideration for this
+system was extensibility. Since this system depended critically on
+user preferences, we wanted to be able to easily modify it as we got
+feedback. Although sacrificing performance compared to some other
+languages, we decided to program this part mostly in Python because
+that was the language our team had the most experience
+in. Furthermore, within Python we decided to implement the server
+functionality as a CGI script rather than using a framework because
+the script retained more of the flexibility we needed to respond to
+user feedback.
+
+The data that the website accessed was stored in a combination of
+CSV files and SQLite databases.
