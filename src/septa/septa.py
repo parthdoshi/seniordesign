@@ -9,8 +9,13 @@ LINK_DB = "final.db"           # Path to database
 TABLE_NAME = "links"           # Name of link table in database
 DEMAND_FILE = "demand.csv"     # Path to demand CSV
 OUTPUT = "results.csv"         # Where to output results
-OVERFLOW = 60 * 24             # Cost of overflow links (0 for infinity)
-GAMETIME = 19 * 60 + 5         # In minutes since midnigth
+OVERFLOW = 1                   # Cost of overflow links (0 for infinity)
+GAMETIME = 19 * 60 + 5         # In minutes since midnight
+
+GRAPH_FILE = "graph.dimacs"  # Path to DIMACS file
+ALIAS_FILE = "alias.graph"   # Path to alias file
+LOAD_GRAPH = 0               # Whether to load graph instead of build it
+SAVE_GRAPH = 1               # Whether to save graph to file
 
 STADIUM_NODE = 0
 STADIUM_STOPS = {
@@ -31,6 +36,34 @@ def main():
 
 def main_sim(gametime, dbfilename, tablename, outfilename):
     print "Starting %s (%f)" % (time.ctime(), time.clock())
+    if LOAD_GRAPH:
+        glpk, alias = load_graph(GRAPH_FILE, ALIAS_FILE)
+        print "Read graph from %s" % GRAPH_FILE
+    else:
+        create_reduced_table(dbfilename, tablename, GAMETIME)
+        print "Created reduced table (%f)" % (time.clock())
+        tablename = tablename + "_temp"
+        graph = make_guido_graph(dbfilename, tablename, OVERFLOW)
+        print "Made the python graph. (%f)" % (time.clock())
+        capacity = get_capacity(dbfilename, tablename)
+        print "Loaded the network's capacity (%f)" % (time.clock())
+        demand = get_demand(DEMAND_FILE, gametime)
+        print "Loaded the network's demand (%f)" % (time.clock())
+        glpk, alias = make_glpk(graph, demand, capacity)
+    w = glpk.weak_comp()[0]
+    print "Got GLPK graph object with %d weak components (%f)" % (w,
+                                                    time.clock())
+    if SAVE_GRAPH and not LOAD_GRAPH:
+        save_graph(glpk, alias, GRAPH_FILE, ALIAS_FILE)
+        print "Wrote mincost to %s and %s" % (GRAPH_FILE, ALIAS_FILE)
+    flow = run_ook(glpk)
+    print "Found the optimal flow (%f), size %d" % (time.clock() ,
+                                                    len(flow))
+    flow = de_alias_flow(alias, flow)
+    flow_to_csv(flow, outfilename)
+    print "Wrote the results to %s (%f)" % (outfilename, time.clock())
+
+def create_reduced_table(dbfilename, tablename, gametime):
     c = sqlite3.connect(dbfilename)
     curs = c.cursor()
     curs.executescript ("""
@@ -41,23 +74,10 @@ def main_sim(gametime, dbfilename, tablename, outfilename):
     CREATE INDEX dest_arr_ix_t on {0}_temp (dest, arrival);
     CREATE INDEX orig_dep_ix_t on {0}_temp (origin, departure);
     """.format(tablename,
-               GraphMaker.minutes_to_str(GAMETIME - 240),
-               GraphMaker.minutes_to_str(GAMETIME + 240))
+               GraphMaker.minutes_to_str(gametime - 240),
+               GraphMaker.minutes_to_str(gametime + 240))
         )
     c.close()
-    print "Created reduced table (%f)" % (time.clock())
-    tablename = tablename + "_temp"
-    graph = make_guido_graph(dbfilename, tablename, OVERFLOW)
-    print "Made the python graph. (%f)" % (time.clock())
-    capacity = get_capacity(dbfilename, tablename)
-    print "Loaded the network's capacity (%f)" % (time.clock())
-    demand = get_demand(DEMAND_FILE, gametime)
-    print "Loaded the network's demand (%f)" % (time.clock())
-    flow = run_ook(graph, demand, capacity)
-    print "Found the optimal flow (%f), size %d" % (time.clock() ,
-                                                    len(flow))
-    flow_to_csv(flow, outfilename)
-    print "Wrote the results to %s (%f)" % (outfilename, time.clock())
 
 def get_capacity(dbfilename, tablename):
     """Load the capacity of each link."""
@@ -65,15 +85,15 @@ def get_capacity(dbfilename, tablename):
             dbfilename,
             detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
     cursor = connection.cursor()
-    cursor.execute('SELECT origin, departure, dest, arrival, capacity, ' +
-                   'baseline ' +
+    cursor.execute('SELECT origin, departure, dest, arrival, (capacity - ' +
+                   'baseline) ' +
                    'FROM %s;' % tablename)
     capacity = {}
-    for orig, dep, dest, arr, cap, bl in cursor.fetchall():
+    for orig, dep, dest, arr, cap in cursor.fetchall():
         try:
-            capacity[(orig, dep)][(dest, arr)] = cap - bl
+            capacity[(orig, dep)][(dest, arr)] = cap
         except KeyError:
-            capacity[(orig, dep)] = {(dest, arr): cap - bl}
+            capacity[(orig, dep)] = {(dest, arr): cap}
     return capacity
 
 def get_demand(demandfile, gametime):
@@ -114,9 +134,32 @@ def make_guido_graph(dbfile, tablename, overflow):
     graph_maker = GraphMaker(dbfile, tablename, overflow)
     return graph_maker.make_graph()
 
-def run_ook(graph, demand, capacity):
+def load_graph(graphfilename, aliasfilename):
     """
-    Run the Ford-Fulkerson algorithm via GLPK.
+    Reads a graph from a DIMACS file.
+    """
+    graph = pyglpk.Graph.read_mincost(graphfilename)
+    alias = {}
+    with open(aliasfilename) as f:
+        for line in f:
+            val, i = line.strip('\n').split('=')
+            i = int(i)
+            val = eval(val.lstrip('0'))  # otherwise appears octal
+            alias[i] = val
+    return graph, alias
+
+def save_graph(graph, alias, graphfilename, aliasfilename):
+    """
+    Save a graph and its alias to a DIMACS file and an alias file.
+    """
+    graph.write_mincost(graphfilename)
+    with open(aliasfilename, 'w') as f:
+        for node, i in alias.iteritems():
+            f.write("{0!r}={1}\n".format(node, i))
+
+def make_glpk(graph, demand, capacity):
+    """
+    Make a PyGLPK graph object.
 
     :param graph: a python graph as returned by make_guido_graph
     :param demand: a mapping {node: demand}. Note that demands should sum
@@ -171,16 +214,24 @@ def run_ook(graph, demand, capacity):
                 yield [(i,j), data]
 
     glpk.add_edges(get_edges())
+    return glpk, alias
+
+def run_ook(glpk):
+    """
+    Run the Out of Kilter Algorithm on the PyGLPK graph.
+    """
     w = glpk.weak_comp()[0]
-    print "Made GLPK graph object with %d weak components (%f)" % (w,
-                                                    time.clock())
     if w > 1:
         raise ValueError("The graph is not weakly connected!")
     flowdict = glpk.mincost_okalg()[0]
     print "Flowdict len:%d" % len(flowdict)
-    node_ids = {node: i for i, node in alias.items()}
+    return flowdict
+
+def de_alias_flow(alias, flow):
+    """Covnert the GLPK node aliases into their original values."""
+    node_ids = {i: node for node, i in alias.items()}
     output = {}
-    for i, d in flowdict.items():
+    for i, d in flow.items():
         node = node_ids[i]
         output[node] = {node_ids[j]: f for j, f in d.items()}
     return output
@@ -273,7 +324,11 @@ class GraphMaker(object):
 
     def load_nodes(self):
         """Load all the nodes into their respective attributes."""
-        # First the stadium nodes
+        self.load_stadium_nodes()
+        self.load_zipcode_nodes()
+        self.load_septa_nodes()
+
+    def load_stadium_nodes(self):
         self.stadium_nodes = {
             (STADIUM_NODE, self.minutes_to_str(GAMETIME + 5 * i)) : {}
             for i in xrange(-15, 13)}
@@ -293,12 +348,15 @@ class GraphMaker(object):
             self.stadium_nodes[(STADIUM_NODE, t)] = {}
         print "Loaded stadium nodes: count = %d (%f)" % (
             len(self.stadium_nodes), time.clock())
-        # Now the zipcode nodes -- each node is a **string**
+
+    def load_zipcode_nodes(self):
+        # Each node is a **string**
         self.execute('SELECT DISTINCT zipcode FROM stops')
         self.zip_nodes = {r[0]: {} for r in self.fetchall()}
         print "Loaded zipcode nodes: count = %d (%f)" % (
             len(self.zip_nodes), time.clock())
-        # Finally the SEPTA nodes
+
+    def load_septa_nodes(self):
         self.execute('SELECT DISTINCT origin, departure '
                      'FROM %s' % self.table)
         nodes = map(tuple, self.fetchall())
@@ -311,9 +369,12 @@ class GraphMaker(object):
 
     def load_edges(self):
         """Populate the three dicts with edges."""
-        # now the zipcode-septa edges
+        self.load_zipcode_edges()
+        self.load_septa_edges()
+
+    def load_zipcode_edges(self):
         e = 0
-        for zipcode, tgs in self.zip_nodes.items():
+        for zipcode, tgts in self.zip_nodes.items():
             self.execute('SELECT origin, departure '
                          'FROM %s ' % self.table +
                          'INNER JOIN stops '
@@ -321,11 +382,19 @@ class GraphMaker(object):
                          'WHERE stops.zipcode=?;',
                          (zipcode,))
             rows = self.fetchall()
-            tgs.update({(o, d): 0 for o, d in rows})
+            tgts.update({(o, d): 0 for o, d in rows})
             e += len(rows)
         print "Loaded zipcode-SEPTA edges: count = %d (%f)" % (e,
                                                           time.clock())
-        # now the SEPTA-SEPTA and SEPTA-Stadium edges
+        if self.overflow:
+            e = 0
+            first_stadium = min(self.stadium_nodes.keys())
+            for tgts in self.zip_nodes.values():
+                tgts[first_stadium] = self.overflow
+                e += 1
+            print "Loaded overflow edges: count = %d (%f)" % (e, time.clock())
+
+    def load_septa_edges(self):
         e = 0
         nodes = sorted(self.septa_nodes.keys())
         for i, node in enumerate(nodes):
@@ -370,14 +439,6 @@ class GraphMaker(object):
         print "Loaded stadium-stadium edges: count = %d (%f)" % (e,
                                                                  time.clock())
         # finally, the zipcode-stadium edges
-        if self.overflow:
-            e = 0
-            first_stadium = min(self.stadium_nodes.keys())
-            for tgts in self.zip_nodes.values():
-                tgts[first_stadium] = self.overflow
-                e += 1
-            print "Loaded overflow edges: count = %d (%f)" % (e, time.clock())
-
     @staticmethod
     def get_delta_mins(t2, t1="00:00:00"):
         """Return (t2 - t1) in minutes of two timestamps with format HH:MM:SS."""

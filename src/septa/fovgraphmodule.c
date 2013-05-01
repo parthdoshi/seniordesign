@@ -9,6 +9,7 @@ PyObject* EMPTY_DICT;
 
 typedef struct { double low, cap, cost, x; } a_data;
 
+
 /**********************************************************
  *  Extract the glp_graph located in pygraph.graph_ptr    */
 int extract_glp_graph(PyObject* pygraph, glp_graph** graph){
@@ -187,6 +188,7 @@ static PyObject* fov_add_edges(PyObject* self, PyObject* args){
     switch (dict_key_to_double(edge_data, "cap", temp_d)){
     case -1: // KeyError
       PyErr_Clear();
+      *temp_d = (double) INT_MAX;
       break;
     case 1:
       return NULL;
@@ -236,5 +238,12 @@ initfovgraph(void) {
   EMPTY_DICT = PyDict_New();
   EMPTY_TUP = PyTuple_New(0);
 
-  (void) Py_InitModule("fovgraph", GraphMethods);
+  PyObject* i;
+  if (!(i = PyInt_FromLong((long) INT_MAX)))
+    return;
+
+  PyObject* m;
+  m = Py_InitModule("fovgraph", GraphMethods);
+  PyModule_AddObject(m, "INT_MAX", i);
+
 }

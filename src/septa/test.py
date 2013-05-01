@@ -3,6 +3,8 @@ import pyglpk
 import unittest
 import random
 
+from fovgraph import INT_MAX
+
 def get_random_edges(low, high):
     for i in xrange(low, high):
         n = random.randrange(high - low)
@@ -52,6 +54,24 @@ class BasicTest(unittest.TestCase):
             self.assertTrue(gdata.cost == data['cost'])
             self.assertTrue(gdata.low == 0)
 
+    def test_add_edges_missing_data(self):
+        def get_edges():
+            for e in get_random_edges(1, 10):
+                d = {}
+                if random.getrandbits(1):
+                    d['cap'] = random.randrange(1, 10)
+                if random.getrandbits(1):
+                    d['cost'] = random.randrange(1, 10)
+                yield (e, d)
+        edges = get_edges()
+        self.graph.add_edges(edges)
+        for edge, data in edges:
+            self.assertTrue(self.graph.has_edge(edge))
+            gdata = self.graph.get_edge_data(edge)
+            self.assertTrue(gdata.cap == data.get('cap', INT_MAX))
+            self.assertTrue(gdata.cost == data.get('cost', 0))
+            self.assertTrue(gdata.low == 0)
+
     def test_add_edges(self):
         edges = list(get_random_edges(1, 10))
         self.graph.add_edges(edges)
@@ -71,7 +91,7 @@ class AlgoTest(unittest.TestCase):
     #          (1, 1)        (1, 1)        (1, 1)        (1, 1)
     #      1 ----------> 2 ----------> 3 ----------> 4 ----------> 5
     #      |                                                       ^
-    #      |                     (1, 5)                            |
+    #      |                    (infty, 5)                         |
     #      +-------------------------------------------------------+
     #
     #          (1, 0)        (1, 0)
@@ -84,16 +104,17 @@ class AlgoTest(unittest.TestCase):
     def setUp(self):
         self.graph = pyglpk.Graph()
         self.graph.add_vertices(10)
-        edges = [(1, 2), (2, 3), (3, 4), (4, 5), (1, 5),
+        edges = [(1, 2), (2, 3), (3, 4), (4, 5),
                  (6, 7), (7, 6), (8, 7), (7, 8),
                  (9, 10), (10, 9)]
-        costs = [1, 1, 1, 1, 5,
+        costs = [1, 1, 1, 1,
                  0, 0, 0, 0,
                  1, 1]
         caps = [1] * len(costs)
         assert len(edges) == len(costs) == len(caps)
         self.graph.add_edges((e, {'cap': cap, 'cost': cost})
                              for e, cap, cost in zip(edges, caps, costs))
+        self.graph.add_edges([((1, 5), {'cost': 5})])
 
 
 class IOTest(AlgoTest):
@@ -167,7 +188,7 @@ class MinCostTest(AlgoTest):
         self.graph.set_demand(2, 1)
         self.assertRaises(ValueError, self.graph.mincost_okalg)
         self.graph.set_demand(2, 0)
-        self.graph.set_demand(1, 3)
+        self.graph.set_demand(2, 2)
         self.graph.set_demand(5, 3)
         self.assertRaises(ValueError, self.graph.mincost_okalg)
 

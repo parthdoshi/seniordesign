@@ -135,6 +135,12 @@ class Graph(object):
         self.graph_ptr = _create_graph(ctypes.sizeof(self._vdata),
                                        ctypes.sizeof(self._adata))
 
+    def __del__(self):
+        """Free the graph memory."""
+        stdout = GLPKStdout(True)
+        if _GLPK.glp_delete_graph(self.graph_ptr):
+            raise RuntimeError(stdout.read_last())
+
     ##################################################
     #         MODIFY GRAPH TOPOLOGY METHODS          #
     ##################################################
@@ -201,8 +207,7 @@ class Graph(object):
         i, j = edge
         if not (self.has_node(i) and self.has_node(j)):
             return False
-        ptr = self.graph_ptr[0].v[i]
-        return edge in self.get_out_edges(ptr)
+        return edge in self.get_out_edges(i)
 
     def assert_has_edge(self, edge):
         if not self.has_edge(edge):
@@ -267,17 +272,6 @@ class Graph(object):
         node_p = self.graph_ptr[0].v[node]
         return self._get_node_data_struct(node_p)
 
-
-    def _get_node_data_struct(self, node_pointer):
-        """Return the vdata struct associated with the node data."""
-        data = node_pointer[0].data
-        return ctypes.cast(data, ctypes.POINTER(self._vdata))[0]
-
-    def _get_edge_data_struct(self, edge_pointer):
-        """Return the adata struct associated with the edge data."""
-        data = edge_pointer[0].data
-        return ctypes.cast(data, ctypes.POINTER(self._adata))[0]
-
     ##################################################
     #                GRAPH ALGORITHMS                #
     ##################################################
@@ -320,15 +314,6 @@ class Graph(object):
                     flowvec[i] = {j: flow}
         return flowvec, sol.value
 
-    def _extract_v_num(self):
-        """
-        Get a dictionary of {node-index: v_num}.
-
-        Used by weak_comp, strong_comp and topological_sort.
-        """
-        return {node_p[0].i: self._get_node_data_struct(node_p).v_num
-                for node_p in self.iter_node_pts()}
-
     def weak_comp(self):
         """Calculate the number of weakly connected components."""
         n = _GLPK.glp_weak_comp(self.graph_ptr, self._vdata.v_num.offset)
@@ -356,7 +341,8 @@ class Graph(object):
         n = _GLPK.glp_top_sort(self.graph_ptr, self._vdata.v_num.offset)
         if n:
             raise ValueError("Graph has cycles so can't sort!")
-        return self._extract_v_num()
+        nums = self._extract_v_num()
+        return sorted(nums, key=nums.get)
 
     ##################################################
     #                ITERATOR METHODS                #
@@ -403,8 +389,21 @@ class Graph(object):
             yield a
             a = a[0].t_next
 
-    def get_out_edges(self, node_ptr, data=False):
+    def get_in_edge_ptrs(self, node_ptr):
+        """Iterate over the pointers of the incoming edges to node_ptr."""
+        a = getattr(node_ptr[0], "in")
+        while True:
+            try:
+                a[0]
+            except ValueError:  # NULL pointer access
+                break
+            yield a
+            a = a[0].h_next
+
+    def get_out_edges(self, node, data=False):
         """Iterate over the outgoing edges from node."""
+        self.assert_has_node(node)
+        node_ptr = self.graph_ptr[0].v[node]
         for ptr in self.get_out_edge_ptrs(node_ptr):
             ret = (ptr[0].tail[0].i, ptr[0].head[0].i)
             if data:
@@ -412,7 +411,7 @@ class Graph(object):
             yield ret
 
     ##################################################
-    #               DIMACS I/O METHODS               #
+    #            DIMACS/GRAPH I/O METHODS            #
     ##################################################
 
     @classmethod
@@ -473,6 +472,31 @@ class Graph(object):
                                    self._adata.cost.offset,
                                    str(filename)):
             raise RuntimeError(stdout.read_last())
+
+    ##################################################
+    #                 CTYPES UTLITIES                #
+    ##################################################
+
+    def _get_node_data_struct(self, node_pointer):
+        """Return the vdata struct associated with the node data."""
+        data = node_pointer[0].data
+        return ctypes.cast(data, ctypes.POINTER(self._vdata))[0]
+
+    def _get_edge_data_struct(self, edge_pointer):
+        """Return the adata struct associated with the edge data."""
+        data = edge_pointer[0].data
+        return ctypes.cast(data, ctypes.POINTER(self._adata))[0]
+
+    def _extract_v_num(self):
+        """
+        Get a dictionary of {node-index: v_num}.
+
+        Used by weak_comp, strong_comp and topological_sort.
+        """
+        return {node_p[0].i: self._get_node_data_struct(node_p).v_num
+                for node_p in self.iter_node_pts()}
+
+
 
 def is_null_p(pt):
     """Check whether a pointer is null."""
