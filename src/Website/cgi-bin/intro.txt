@@ -1,0 +1,12 @@
+We have a comprehensive traffic flow model that simulates the journey from your
+location to the South Philadelphia Sports Complex. It requires you to input data
+about your fuel type (diesel or gasoline) and mileage (MPG) because both these
+factors are the main determinants of a car’s carbon emissions and encompass other
+factors including age, make, engine size, etc. Furthermore, it also uses current data
+from the Google API to find the congestion on both the roads to estimate your cars
+idling time, which can greatly effect your emissions, as well as the time taken to
+complete your journey. Then it provides you with the alternative of taking SEPTA,
+providing congestion information about the train, as well as various routes from
+all the SEPTA stations in the vicinity of your zip code. We believe that by showing
+you a direct comparison of the time taken, carbon emissions and traffic congestion
+between driving and taking SEPTA will convince you to help the Philles Go Green!

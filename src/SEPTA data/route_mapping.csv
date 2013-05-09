@@ -1,0 +1,177 @@
+11270,1
+11271,10
+11242,101
+11244,102
+11245,103
+11246,104
+11247,105
+11248,106
+11249,107
+11250,108
+11251,109
+11273,11
+11252,110
+11253,111
+11254,112
+11255,113
+11256,114
+11376,115
+11258,116
+11259,117
+11260,118
+11261,119
+11274,12
+11262,120
+11263,123
+11219,124
+11264,125
+11265,126
+11220,127
+11221,128
+11222,129
+11275,13
+11223,130
+11224,131
+11225,132
+11226,133
+11227,139
+11276,14
+11277,15
+11228,150
+11278,15B
+11279,16
+11280,17
+11281,18
+11282,19
+11283,2
+11284,20
+11229,201
+11377,204
+11378,205
+11230,206
+11286,21
+11288,22
+11289,23
+11290,24
+11291,25
+11292,26
+11293,27
+11294,28
+11295,29
+11296,3
+11297,30
+11298,31
+11442,310
+11380,312
+11299,32
+11300,33
+11302,34
+11303,35
+11304,36
+11305,37
+11306,38
+11307,39
+11308,4
+11310,40
+11311,42
+11312,43
+11313,44
+11314,46
+11315,47
+11316,47M
+11317,48
+11318,5
+11319,50
+11320,52
+11321,53
+11322,54
+11323,55
+11324,56
+11325,57
+11326,58
+11327,59
+11328,6
+11329,60
+11330,61
+11332,62
+11333,64
+11334,65
+11335,66
+11336,67
+11337,68
+11338,7
+11339,70
+11341,73
+11342,75
+11343,77
+11344,78
+11345,79
+11346,8
+11347,80
+11348,84
+11349,88
+11351,89
+11352,9
+11231,90
+11232,91
+11233,92
+11234,93
+11235,94
+11236,95
+11237,96
+11238,97
+11239,98
+11240,99
+11355,BSO
+11384,BSS
+11356,G
+11357,H
+11360,J
+11361,K
+11363,L
+11382,LUCYGO
+11383,LUCYGR
+11385,MFL
+11364,MFO
+11266,NHSL
+11365,R
+11375,XH
+AIR,"Airport Line"
+CHE,"Chestnut Hill East Line"
+CHW,"Chestnut Hill West Line"
+LAN,"Lansdale/Doylestown Line"
+MED,"Media/Elwyn Line"
+FOX,"Fox Chase Line"
+NOR,"Manayunk/Norristown Line"
+PAO,"Paoli/Thorndale Line"
+CYN,"Cynwyd Line"
+TRE,"Trenton Line"
+WAR,"Warminster Line"
+WIL,"Wilmington/Newark Line"
+WTR,"West Trenton Line"
+AIR,"Airport Line"
+CHE,"Chestnut Hill East Line"
+CHW,"Chestnut Hill West Line"
+LAN,"Lansdale/Doylestown Line"
+MED,"Media/Elwyn Line"
+FOX,"Fox Chase Line"
+NOR,"Manayunk/Norristown Line"
+PAO,"Paoli/Thorndale Line"
+CYN,"Cynwyd Line"
+TRE,"Trenton Line"
+WAR,"Warminster Line"
+WIL,"Wilmington/Newark Line"
+WTR,"West Trenton Line"
+AIR,"Airport Line","Airport Line","",SEPTA,2,91456C,FFFFFF,http://www.septa.org/schedules/rail/index.html
+CHE,"Chestnut Hill East Line","Chestnut Hill East Line","",SEPTA,2,94763C,FFFFFF,http://www.septa.org/schedules/rail/index.html
+CHW,"Chestnut Hill West Line","Chestnut Hill West Line","",SEPTA,2,00B4B2,FFFFFF,http://www.septa.org/schedules/rail/index.html
+LAN,"Lansdale/Doylestown Line","Lansdale/Doylestown Line","",SEPTA,2,775B49,FFFFFF,http://www.septa.org/schedules/rail/index.html
+MED,"Media/Elwyn Line","Media/Elwyn Line","",SEPTA,2,007CC8,FFFFFF,http://www.septa.org/schedules/rail/index.html
+FOX,"Fox Chase Line","Fox Chase Line","",SEPTA,2,FF823D,FFFFFF,http://www.septa.org/schedules/rail/index.html
+NOR,"Manayunk/Norristown Line","Manayunk/Norristown Line","",SEPTA,2,EE4C69,FFFFFF,http://www.septa.org/schedules/rail/index.html
+PAO,"Paoli/Thorndale Line","Paoli/Thorndale Line","",SEPTA,2,20825C,FFFFFF,http://www.septa.org/schedules/rail/index.html
+CYN,"Cynwyd Line","Cynwyd Line","",SEPTA,2,6F549E,FFFFFF,http://www.septa.org/schedules/rail/index.html
+TRE,"Trenton Line","Trenton Line","",SEPTA,2,F683C9,FFFFFF,http://www.septa.org/schedules/rail/index.html
+WAR,"Warminster Line","Warminster Line","",SEPTA,2,F7AF42,FFFFFF,http://www.septa.org/schedules/rail/index.html
+WIL,"Wilmington/Newark Line","Wilmington/Newark Line","",SEPTA,2,8AD16B,FFFFFF,http://www.septa.org/schedules/rail/index.html
+WTR,"West Trenton Line","West Trenton Line","",SEPTA,2,5D5EBC,FFFFFF,http://www.septa.org/schedules/rail/index.html

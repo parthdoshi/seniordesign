@@ -1,0 +1,46 @@
+<div id="route" onload="initialize()">
+	<h2>Route</h2>
+	<hr>
+	${script}
+	<div id="googleMap" style="width:500px;height:500px;display:block;margin-left:auto;margin-right:auto"></div>
+	<div style="display:block;margin-left:auto;margin-right:auto">
+	<strong>Mode of Travel: </strong>
+	<select id="mode" onchange="calcRoute();">
+	  <option value="DRIVING">Driving</option>
+	  <option value="WALKING">Walking</option>
+	  <option value="BICYCLING">Bicycling</option>
+	  <option value="TRANSIT">Transit</option>
+	</select>
+	</div>
+</div>
+<div>
+	<h2>Use Public Transportation Instead...</h2>
+	<hr>
+	<table style="width:100%">
+	<tr>
+		<th style="width:33%">Car</th>
+				<th style="width:20%"></th>
+				<th style="width:33%">Septa</th>
+</tr>
+<tr>
+		<td>${car_time}</td>
+				<td>Time Taken (minutes)</td>
+				<td>${septa_time}</td>
+</tr>
+<tr>
+		<td>${car_dist}</td>
+				<td>Distance (meters)</td>
+				<td>${septa_dist}</td>
+</tr>
+<tr>
+		<td>${car_emmis}</td>
+				<td>Carbon Emissions (g CO2)</td>
+				<td>${septa_emmis}</td>
+</tr>
+<tr>
+		<td>${car_cong}</td>
+				<td>Congestion (%)</td>
+				<td>${septa_cong}</td>
+</tr>
+</table>
+</div>

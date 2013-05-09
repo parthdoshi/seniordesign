@@ -1,0 +1,49 @@
+		<h2>Our Motivation</h2>
+		<hr>
+
+		Stadium Traffic is dedicated to reducing the carbon footprint due to fans attending sports games in the Philadelphia Area. Recently, there has been a significant push by Philadelphia's sports teams to become more environmentally friendly by launching programs such as the Eagles "<i>Go Green</i>" initiative and Philles "<i>Red Goes Green</i>" initiative. 
+
+		<br> <br>
+
+		We believe that traffic emissions, specifically those due to large amounts of time spent idling when entering or leaving the stadium, are a major contributor to the total emissions produced by the stadium and therefore have the potential to be greatly reduced. 
+
+		<br><br>
+
+		The objectives of our project are:
+		<ol>
+		<li>Develop a comprehensive model of transportation to and from the stadium.</li>
+		<li>Quantify the total emissions due to transportation to and from games.</li>
+		<li>Optimally route exiting vehicle traffic out of the stadium.</li>
+		<li>Inform fans of the change in travel time and carbon emissions by using public transport rather than cars.</li>
+		</ol>
+
+		<br><br>
+
+		<h2>Our Team</h2>
+		<hr>
+
+		<div style="margin-right:auto, margin-left:auto">
+		<img src="/img/Felipe.png" alt="Felipe Photo" width="250" height="250">
+			<div id="felipe_text">
+			<h2>Felipe Ochoa</h2><hr>
+			Felipe is a senior at the University of Pennsylvania studying Systems Engineering, Mathematics and Operations & Information Management. He has previously worked in Private Equity and Management Consulting. He is passionate about teaching himself programming languages and bakes bread in his free time.
+			</div>
+		</div>
+		<br><br>
+		
+		<div style="margin-right:auto, margin-left:auto">
+		<img src="/img/Parth.png" alt="Parth Photo" width="250" height="250">
+			<div id="parth_text">
+			<h2>Parth Doshi</h2><hr>
+				Parth is a senior in the Management and Technology Program at the University of Pennsylvania. He is studying Computer Science, Finance and Management. He has previously worked in Investment Management and Management Consulting. He is passionate about social impact and enjoys playing video games and watching TV shows in his free time.
+		</div>
+		</div>
+		<br><br>
+
+		<div style="margin-right:auto, margin-left:auto">
+		<img src="/img/Zain.png" alt="Zain Photo" width="250" height="250">
+			<div id="zain_text">
+			<h2>Zain Mukaty</h2><hr>
+				Zain is a senior in the Management and Technology Program at the University of Pennsylvania. He is studying Systems Engineering, Finance and Management. His background includes stints in the financial and economic consulting, textile and power industries. In his free time, Zain enjoys spending time with friends and family.
+			</div>
+			</div>

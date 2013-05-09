@@ -1,0 +1,7 @@
+<form method="GET" action="cgi-bin/feedback.py">
+<h2>Send us feedback on our website!</h2>
+<h3>Name:</h3><input type="text" name="name">
+<h3>Email:</h3><input type="text" name="email">
+<h3>Comment:</h3><input type="text" name="comment" style="width:300px;height:150px">
+<h3>Send Feedback:</h3><input type="submit" value="Submit">
+</form>

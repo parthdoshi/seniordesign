@@ -1,0 +1,72 @@
+<html>
+	<head>
+	<title>Stadium Traffic - Emission Calculator</title>
+	<link rel="stylesheet" type="text/css" href="/style.css" />
+	</head>
+	
+	<body style="body">
+		<div id="logo">
+			<a href="/index.html"><img src="/img/Logo.png" alt="Logo" width="301" height="146" style="border:1px solid #C72429"></a>
+		</div>
+		<div id="nav" class="clearfix">
+		<ul class="clearfix">
+		  <li><a href="/index.html">Home</a></li>
+		  <li><a href="/about.html">About Us</a></li>
+		  <li><a href="/alternatives.html">Alternatives</a></li>
+		  <li><a href="/feedback.html">Feedback</a></li>
+		</ul>
+      </div>
+		<div class="clearfix" id="main">
+			<div>
+<h2> Emissions Calculator </h2>
+</div>
+<div id="weather" style="float:right;border:1px">
+<h4> Next home game: 7:00 PM EDT on April 18 </h4>
+<h4>Chance of Rain</h4>
+<img id="icon" src=http://icons-ak.wxug.com/i/c/k/chancerain.gif width="50" height="50">
+<h4> 18 &deg C | 65 &deg F</h4>
+</div>
+<hr>
+
+<script type="text/javascript">
+var valid = ["19101","19102","19103","19104","19105","19106","19107","19108","19109","19110","19111","19112","19113","19114","19115","19116","19118","19119","19120","19121","19122","19123","19124","19125","19126","19127","19128","19129","19130","19131","19132","19133","19134","19135","19136","19137","19138","19139","19140","19141","19142","19143","19144","19145","19146","19147","19148","19149","19150","19151","19152","19153","19154","19155","19157","19160"];
+function check_form(){
+	var z = document.getElementById("zipcode");
+	if (!z || z.value == ""){
+		alert("Please input a zipcode!");
+		return false;
+	}
+	if(!z || valid.indexOf(z.value) < 0){
+		alert("This is a prototype, please choose a zipcode in the 19101-19157 range");
+		return false;
+	}
+	return true;
+}
+</script>
+
+<form method="GET" onSubmit="return check_form()" action="cgi-bin/results.py">
+<p>Enter Address: <input type="text" name="address">
+<p>Enter Zipcode: <input id="zipcode" type="text" name="zipcode">
+<p>Miles per Gallon: <input type="text" name="mpg">
+<p>Fuel Type: <select name="fuel">
+<option value="gas">Gasoline</option>
+<option value="diesel">Diesel</option>
+</select>
+<p><input type="submit" value="Submit">
+</form>
+<br>
+<h2> How are emissions calculated? </h2>
+<hr>
+<p> We have a comprehensive traffic flow model that simulates the journey from your location to the South Philadelphia Sports Complex. It requires you to input data about your fuel type (diesel or gasoline) and mileage (MPG) because both these factors are the main determinants of a car's carbon emissions and encompass other factors including age, make, and engine size of the car. Furthermore, it also uses current data from the Google Maps API to find the congestion on both the routes to estimate your cars idling time, which can greatly effect your emissions, as well as the time taken to complete your journey. It then provides you with the alternative of taking SEPTA, providing congestion information about the trains and buses, as well as various routes from all the SEPTA stations in the vicinity of your zip code. We believe that by showing you a direct comparison of the time taken, carbon emissions and traffic congestion between driving and taking SEPTA will convince you to help the Philles Go Green! </p>
+
+		</div>
+		<div class="clearfix" id="footer">
+			<div id="footer1">
+				Copyright &copy; 2013 Stadium Traffic Inc.
+			</div>
+			<div id="footer2">
+				All Rights Reserved | <a href="/privacy.html" style="color:white">Privacy Policy</a>
+			</div>
+		</div>
+	</body>
+</html>

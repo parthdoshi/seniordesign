@@ -1,0 +1,83 @@
+.clearfix:after {
+	content:".";
+	display:block;
+	font-size:0;
+	height:0;
+	clear:both;
+	visibility:hidden;
+}
+th, td { text-align: center; font-size: 1.2em; line-height: 3em;}
+th {font-size: 2em;}
+
+body {
+	background-color:#C72429;
+	color:#505050;
+	font-family:georgia;
+	font-size:15px;
+	margin:0;
+	padding:0;
+}
+
+#logo {
+	padding: 30px 80px 25px 80px;
+	float:left;
+}
+
+#footer1 {
+	padding: 0px 75px 25px 80px;
+	float:left;
+	color:white;
+}
+
+#footer2 {
+	padding: 0px 75px 0px 30px;
+	float:right;
+	color:white;
+}
+
+#main { 
+	background-color: #e9e9e9;
+	padding: 25px 75px 75px;
+	position: relative;
+	margin-top: 0px;
+	margin-left:80px;
+	margin-right:80px;
+	margin-bottom:20px;
+}
+
+#main a {	
+	text-decoration: none;	
+	color: #39f;	
+	font-style: italic;	
+}
+
+#main a:hover	{	
+ color: black;	
+ font-style: italic;		
+ text-decoration: underline;
+}
+
+
+#nav, #nav ul { margin: 0px; }
+
+#nav ul {
+	float: right;
+	list-style:none;
+	padding: 150px 80px 25px 0px;
+}
+
+#nav ul li { float:left; }
+
+#nav ul li a {
+	padding: 8px 20px;
+	text-decoration:none;
+	text-shadow: 1px 1px #000000;
+	font-size: 18px;
+}
+
+#nav ul li a:visited, #nav ul li a { color: #efefef; }
+
+#nav ul li a:hover, #nav ul li.active-nav a { background: rgba(255, 255, 255, 0.6); color:#00C;}
+
+#nav ul li.active-nav a { border: 1px solid #999; }
+
